@@ -1,0 +1,7 @@
+httpx
+python-dotenv
+rich
+fastapi
+uvicorn
+playwright
+jinja2

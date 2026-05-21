@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+runs/
+*.egg-info/
+dist/
+build/
+.eggs/
+*.db
+.DS_Store
+*.log
+.claude/

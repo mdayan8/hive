@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ÆTHERION RWS — Swarm Intelligence Prediction Engine</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c5ce7' stroke-width='2.5' stroke-linecap='round'><circle cx='12' cy='12' r='3.5'/><path d='M12 2v3M12 19v3M2 12h3M19 12h3M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..600&family=JetBrains+Mono:wght@400..500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f5f8; --bg2:#eef0f4; --surface:#ffffff; --surface2:#f8f9fc; --surface3:#eef0f4;
+  --border:#e2e5ec; --border2:#d0d4de; --text:#1a1d2e; --text2:#5a6072; --text3:#949aae;
+  --accent:#6c5ce7; --accent2:#a29bfe; --accent3:rgba(108,92,231,.08);
+  --green:#00b894; --green2:rgba(0,184,148,.08); --red:#e17055; --red2:rgba(225,112,85,.08);
+  --amber:#fdcb6e; --amber2:rgba(253,203,110,.15); --blue:#74b9ff; --blue2:rgba(116,185,255,.1);
+  --shadow:0 1px 3px rgba(0,0,0,.06); --shadow-lg:0 8px 32px rgba(0,0,0,.1);
+  --radius:10px; --radius-sm:6px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;font-size:13px}
+.app{display:grid;grid-template-columns:220px 1fr 300px;grid-template-rows:44px 1fr;height:100vh}
+.topbar{grid-column:1/-1;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 14px;gap:10px;z-index:10}
+.logo{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.3px}
+.logo svg{width:16px;height:16px;-webkit-text-fill-color:initial;color:var(--accent)}
+.topbar-mid{flex:1;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);overflow:hidden}
+.goal-text{color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:400px}
+.badge{font-size:9px;padding:2px 8px;border-radius:99px;font-weight:500}
+.badge-idle{background:var(--surface2);color:var(--text3)}
+.badge-run{background:var(--green2);color:var(--green)}
+.badge-think{background:var(--accent3);color:var(--accent);display:none;align-items:center;gap:4px;padding:2px 10px}
+.badge-think .spinner{width:7px;height:7px;border:1.5px solid var(--accent);border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.topbar-right{display:flex;align-items:center;gap:10px;font-size:10px;color:var(--text2);flex-shrink:0}
+.token-display{display:flex;align-items:center;gap:3px;padding:2px 7px;background:var(--surface2);border-radius:var(--radius-sm);font-size:9px;font-weight:500;color:var(--text2)}
+.token-display .num{color:var(--accent);font-weight:600}
+#timer{font-variant-numeric:tabular-nums;font-size:10px;color:var(--text3)}
+
+/* SIDEBAR — SIMULATIONS + AGENTS */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.chat-head{padding:10px 10px 4px 12px;display:flex;align-items:center;justify-content:space-between}
+.chat-head h3{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px}
+.chat-new-btn{font-size:9px;padding:2px 8px;border-radius:4px;border:1px solid var(--border);background:var(--surface);color:var(--accent);cursor:pointer;font-weight:500;font-family:'Inter',sans-serif;transition:all .1s}
+.chat-new-btn:hover{background:var(--accent3);border-color:rgba(108,92,231,.25)}
+.chat-list{flex:0 1 auto;overflow-y:auto;padding:2px 6px;min-height:0;max-height:48%}
+.chat-item{display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;cursor:pointer;transition:all .1s;border:1px solid transparent;margin-bottom:1px}
+.chat-item:hover{background:var(--surface2);border-color:var(--border)}
+.chat-item.active{background:var(--accent3);border-color:rgba(108,92,231,.25)}
+.chat-item .cdot{width:5px;height:5px;border-radius:50%;flex-shrink:0;margin-top:1px}
+.chat-info{flex:1;overflow:hidden;min-width:0}
+.chat-goal{font-size:10px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-meta{font-size:7px;color:var(--text3);display:flex;gap:5px;margin-top:1px;align-items:center}
+.chat-del{font-size:9px;color:var(--text3);cursor:pointer;padding:0 3px;opacity:0;transition:opacity .1s;flex-shrink:0;border:none;background:none;font-family:'Inter',sans-serif}
+.chat-item:hover .chat-del{opacity:.5}.chat-del:hover{opacity:1!important;color:var(--red)!important}
+.sb-divider{height:1px;background:var(--border);margin:4px 8px;flex-shrink:0}
+.sidebar-head{padding:6px 12px 4px;font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;display:flex;justify-content:space-between;flex-shrink:0}
+.sidebar-list{flex:1;overflow-y:auto;padding:2px 6px 6px;min-height:0}
+.ag-item{display:flex;align-items:center;gap:6px;padding:4px 7px;border-radius:5px;cursor:pointer;font-size:10px;color:var(--text2);transition:all .1s;border:1px solid transparent;margin-bottom:1px}
+.ag-item:hover{background:var(--surface2);color:var(--text);border-color:var(--border)}
+.ag-item.active{background:var(--accent3);border-color:rgba(108,92,231,.25);color:var(--accent)}
+.ag-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;transition:all .3s;box-shadow:0 0 0 1px rgba(0,0,0,.04)}
+.ag-dot.pulse{animation:agPulse 1.5s ease-in-out infinite}
+@keyframes agPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(1.8)}}
+.ag-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ag-status{font-size:7px;padding:1px 5px;border-radius:3px;flex-shrink:0;font-weight:500;text-transform:uppercase;letter-spacing:.3px}
+.st-running{background:var(--accent3);color:var(--accent)}
+.st-done{background:var(--green2);color:var(--green)}
+.st-spawned{background:var(--amber2);color:#c89520}
+.sidebar-footer{padding:6px 12px;border-top:1px solid var(--border);font-size:9px;color:var(--text2);flex-shrink:0}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.stat-item{display:flex;justify-content:space-between;padding:1px 0;font-size:9px}
+.stat-val{font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+
+/* CENTER */
+.center{display:flex;flex-direction:column;overflow:hidden;position:relative;background:var(--bg)}
+.nav-bar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;padding:0 6px}
+.nav-item{font-size:9px;padding:6px 10px;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .12s;display:flex;align-items:center;gap:4px;font-weight:500;letter-spacing:.2px}
+.nav-item.active{color:var(--accent);border-bottom-color:var(--accent)}
+.nav-item:hover{color:var(--text);background:var(--surface2)}
+.graph-container{flex:1;position:relative;overflow:hidden;cursor:grab;background:var(--bg)}
+.graph-container canvas{display:block;width:100%;height:100%}
+.graph-container.dragging{cursor:grabbing}
+
+/* AGENT DETAIL PANEL — full height, scrollable, with chat */
+.agent-detail{position:absolute;top:28px;left:0;width:480px;max-height:calc(100% - 48px);background:var(--surface);border-right:1px solid var(--border2);z-index:20;display:none;flex-direction:column;box-shadow:var(--shadow-lg);border-radius:0 var(--radius) 0 0;animation:slideRight .15s ease;pointer-events:auto}
+.agent-detail.show{display:flex}
+@keyframes slideRight{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+.ad-header{padding:10px 12px 6px;border-bottom:1px solid var(--border);flex-shrink:0}
+.ad-h-top{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.ad-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.ad-name{font-size:12px;font-weight:600;color:var(--text)}
+.ad-badges{display:flex;gap:4px;margin-left:auto}
+.ad-close{background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;border-radius:3px;transition:all .1s;margin-left:4px}
+.ad-close:hover{color:var(--red);background:var(--red2)}
+.ad-badge{font-size:7px;padding:1px 6px;border-radius:99px;font-weight:500;white-space:nowrap}
+.ad-badge-tk{background:var(--accent3);color:var(--accent)}
+.ad-badge-done{background:var(--green2);color:var(--green)}
+.ad-badge-run{background:var(--amber2);color:#c89520}
+.ad-mission{font-size:9px;color:var(--text2);padding:3px 0;line-height:1.4}
+.ad-scroll{flex:1;overflow-y:auto;padding:6px 12px 0;min-height:0}
+.ad-section{font-size:7px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:6px 0 3px;display:flex;align-items:center;justify-content:space-between}
+.ad-body{font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:4px;white-space:pre-wrap;word-break:break-word;max-height:150px;overflow-y:auto}
+.ad-evidence{margin:2px 0}
+.ad-ev-item{font-size:8px;color:var(--text2);padding:2px 0 2px 8px;border-bottom:1px solid var(--border);position:relative}
+.ad-ev-item::before{content:'•';position:absolute;left:0;color:var(--accent)}
+.ad-cites{display:flex;flex-wrap:wrap;gap:2px;margin:2px 0}
+.ad-cite-tag{padding:2px 6px;border-radius:3px;font-size:8px;background:var(--accent3);color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;transition:all .1s}
+.ad-cite-tag:hover{background:var(--accent);color:#fff;text-decoration:none}
+.ad-tags{display:flex;flex-wrap:wrap;gap:3px;margin:2px 0}
+.ad-tag{padding:2px 6px;border-radius:4px;font-size:7px;margin:1px;line-height:1.4;max-width:100%;word-break:break-word}
+.ad-empty{font-size:8px;color:var(--text3);padding:4px 0}
+
+/* CHAT SECTION */
+.ad-chat{border-top:1px solid var(--border);flex-shrink:0;display:flex;flex-direction:column;max-height:180px}
+.ad-chat-msgs{overflow-y:auto;padding:4px 8px;min-height:0;flex:1}
+.ad-chat-msg{font-size:8px;padding:3px 6px;border-radius:5px;margin-bottom:2px;line-height:1.4}
+.ad-chat-msg.user{background:var(--accent3);color:var(--accent);margin-left:20px}
+.ad-chat-msg.agent{background:var(--surface3);color:var(--text2);margin-right:20px}
+.ad-chat-msg .label{font-size:7px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;opacity:.5;margin-bottom:1px}
+.ad-chat-input{display:flex;gap:4px;padding:4px 8px 6px;border-top:1px solid var(--border)}
+.ad-chat-input input{flex:1;padding:4px 8px;border:1px solid var(--border);border-radius:5px;font-size:9px;background:var(--surface2);color:var(--text);outline:none;font-family:'Inter',sans-serif;transition:border .15s}
+.ad-chat-input input:focus{border-color:var(--accent2)}
+.ad-chat-input button{padding:4px 10px;border:1px solid var(--border);border-radius:5px;background:var(--accent);color:#fff;font-size:9px;cursor:pointer;font-weight:500;font-family:'Inter',sans-serif;transition:all .1s}
+.ad-chat-input button:hover{opacity:.85}.ad-chat-input button:disabled{opacity:.4;cursor:wait}
+.ad-chat-empty{font-size:8px;color:var(--text3);padding:6px 8px;text-align:center}
+
+/* OVERLAYS */
+.input-overlay{position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(244,245,248,.94);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;z-index:50;flex-direction:column;gap:16px}
+.input-overlay.hidden{display:none}
+.input-box{width:520px;max-width:90vw;text-align:center}
+.input-box h1{font-size:22px;font-weight:700;margin-bottom:2px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-.5px}
+.input-box .sub{font-size:10px;color:var(--text2);margin-bottom:14px;line-height:1.5;max-width:500px;margin-left:auto;margin-right:auto}
+.input-box textarea{width:100%;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;color:var(--text);font-size:12px;font-family:'Inter',sans-serif;outline:none;transition:border .2s,box-shadow .2s;resize:none;height:52px}
+.input-box textarea:focus{border-color:var(--accent2);box-shadow:0 0 0 3px var(--accent3)}
+.input-row{display:flex;gap:6px;margin-top:6px}
+.input-row input{flex:1;font-size:10px;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);outline:none;transition:border .2s}
+.input-row input:focus{border-color:var(--accent2)}
+.run-btn{padding:10px 28px;background:linear-gradient(135deg,var(--accent),#5a4bd1);color:#fff;border:none;border-radius:var(--radius);font-size:12px;font-weight:500;cursor:pointer;margin-top:12px;transition:transform .1s,box-shadow .2s;box-shadow:0 2px 8px rgba(108,92,231,.25)}
+.run-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(108,92,231,.3)}.run-btn:active{transform:translateY(0)}
+.shortcut{font-size:8px;color:var(--text3);margin-top:6px}
+.shortcut kbd{background:var(--surface2);padding:1px 4px;border-radius:3px;border:1px solid var(--border)}
+/* Tool Manager Modal */
+.tool-manager-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:100;display:flex;align-items:center;justify-content:center}
+.tool-manager-overlay.hidden{display:none}
+.tool-manager-panel{background:var(--surface);border-radius:var(--radius);width:500px;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg);padding:14px 16px}
+.tm-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.tm-list-entry{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:5px;margin-bottom:3px;background:var(--surface2);font-size:9px}
+.tm-list-entry .tm-toggle{width:30px;height:16px;border-radius:8px;background:var(--green);cursor:pointer;position:relative;transition:background .15s;flex-shrink:0}
+.tm-list-entry .tm-toggle.off{background:var(--border2)}
+.tm-list-entry .tm-toggle .knob{width:12px;height:12px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:left .15s}
+.tm-list-entry .tm-toggle.off .knob{left:16px}
+.tm-add-section{border-top:1px solid var(--border);padding-top:6px;margin-top:6px}
+/* Tool toggle chips */
+.tool-chip{display:flex;align-items:center;gap:4px;font-size:8px;padding:3px 8px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);cursor:pointer;transition:all .1s;user-select:none}
+.tool-chip:hover{border-color:var(--accent2)}
+.tool-chip.off{opacity:.4;background:var(--surface3)}
+.tool-chip .chip-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.status-bar{position:absolute;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:6px 12px;font-size:9px;color:var(--text2);display:none;align-items:center;gap:8px;z-index:5}
+.status-bar.visible{display:flex}
+.prog{flex:1;height:2px;background:var(--surface3);border-radius:1px;overflow:hidden}
+.prog-fill{height:100%;border-radius:1px;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .4s ease}
+.status-text{flex-shrink:0;font-weight:450;color:var(--text2);min-width:100px;text-align:right;font-size:9px}
+.console-view{position:absolute;top:28px;left:0;right:0;bottom:20px;overflow-y:auto;padding:4px;display:none;z-index:2;background:var(--surface)}
+.console-view.active{display:block}
+.console-line{padding:2px 5px;font-size:8px;color:var(--text2);border-bottom:1px solid var(--border);display:flex;gap:6px;font-family:'JetBrains Mono','SF Mono',monospace}
+.console-time{color:var(--text3);flex-shrink:0}
+.sim-view{position:absolute;top:28px;left:0;right:0;bottom:20px;overflow-y:auto;padding:10px;display:none;z-index:2}
+.sim-view.active{display:block}
+.verdict-view{position:absolute;top:28px;left:0;right:0;bottom:28px;overflow-y:auto;padding:16px 20px;display:none;z-index:2;background:var(--surface);-webkit-overflow-scrolling:touch}
+.verdict-view.active{display:block}
+.sim-card{padding:10px 12px;border-radius:var(--radius);margin-bottom:5px;border:1px solid var(--border);background:var(--surface);animation:cardIn .2s ease}
+@keyframes cardIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.sc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.sc-name{font-size:11px;font-weight:600;text-transform:capitalize}
+.sc-prob{font-size:9px;font-weight:600;padding:1px 7px;border-radius:99px}
+.sc-opt{background:var(--green2);color:var(--green)}
+.sc-real{background:var(--blue2);color:var(--blue)}
+.sc-doom{background:var(--red2);color:var(--red)}
+.sc-desc{font-size:9px;color:var(--text2);line-height:1.4}
+
+/* RIGHT PANEL */
+.right-panel{background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.rp-section{padding:10px 12px;border-bottom:1px solid var(--border)}
+.rp-title{font-size:7px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.prob-row{display:flex;align-items:center;gap:5px;margin-bottom:3px;font-size:9px}
+.prob-label{width:44px;color:var(--text2);font-weight:450}
+.prob-track{flex:1;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden}
+.prob-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.prob-val{width:28px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)}
+.debate-panel{flex:1;overflow-y:auto;padding:6px 12px;min-height:0}
+.debate-entry{padding:4px 6px;border-radius:5px;margin-bottom:3px;border-left:2.5px solid;animation:deIn .15s ease}
+@keyframes deIn{from{opacity:0;transform:translateX(-3px)}to{opacity:1;transform:translateX(0)}}
+.de-name{font-weight:500;font-size:8px;opacity:.7;margin-bottom:1px}
+.de-text{font-size:9px;color:var(--text2);line-height:1.4}
+.verdict-box{margin-top:3px;padding:10px;border-radius:var(--radius);background:linear-gradient(135deg,var(--accent3),rgba(108,92,231,.04));border:1px solid rgba(108,92,231,.2);font-size:9px;line-height:1.5;max-height:100%;overflow-y:auto}
+.verdict-box .v-prob{font-size:20px;font-weight:700;color:var(--accent);margin-bottom:3px}
+.verdict-box .v-text{color:var(--text2);margin-bottom:1px}
+.verdict-box .v-insight{margin-top:5px;font-size:8px;color:var(--text3)}
+.verdict-box .v-insight li{padding:1px 0}
+.history-section{display:none;max-height:200px;overflow-y:auto;margin-top:3px}
+.history-section.visible{display:block}
+.history-item{padding:2px 0;border-bottom:1px solid var(--border);font-size:8px;color:var(--text2);display:flex;gap:5px}
+.history-agent{font-weight:500;flex-shrink:0;color:var(--accent)}
+.history-text{overflow:hidden;cursor:pointer;line-height:1.4;word-break:break-word}
+
+/* GRAPH OVERLAYS */
+.graph-controls{position:absolute;top:6px;left:6px;z-index:5;display:flex;flex-direction:column;gap:4px}
+.gc-btn{background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--text2);padding:4px 7px;font-size:8px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:4px;font-family:'Inter',sans-serif;font-weight:500}
+.gc-btn:hover{background:var(--surface2);color:var(--text);border-color:var(--border2)}
+.gc-btn.active{background:var(--accent3);color:var(--accent);border-color:rgba(108,92,231,.25)}
+.gc-group{display:flex;gap:2px}
+.graph-legend{position:absolute;top:6px;right:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-size:7px;color:var(--text2);z-index:3;display:none;flex-direction:column;gap:2px}
+.graph-legend.visible{display:flex}
+.legend-row{display:flex;align-items:center;gap:4px}
+.legend-dot{width:6px;height:6px;border-radius:50%}
+.filter-bar{position:absolute;top:36px;left:6px;z-index:5;display:none;gap:3px;flex-wrap:wrap;align-items:center;max-width:500px}
+.filter-bar.visible{display:flex}
+.filter-tag{font-size:7px;padding:2px 6px;border-radius:4px;background:var(--surface);border:1px solid var(--border);color:var(--text2);cursor:pointer;transition:all .1s;font-family:'Inter',sans-serif;font-weight:500}
+.filter-tag.active{background:var(--accent3);border-color:rgba(108,92,231,.25);color:var(--accent)}
+.search-box{position:absolute;top:6px;left:6px;z-index:5;display:none}
+.search-box.visible{display:block}
+.search-box input{width:160px;padding:4px 8px;background:var(--surface);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:9px;font-family:'Inter',sans-serif;outline:none}
+.search-box input:focus{border-color:var(--accent2);box-shadow:0 0 0 2px var(--accent3)}
+.search-box .no-result{font-size:8px;color:var(--red);margin-top:2px;padding:1px 4px}
+.zoom-indicator{position:absolute;bottom:24px;right:8px;background:rgba(255,255,255,.85);backdrop-filter:blur(4px);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:7px;color:var(--text3);z-index:3;display:none}
+.zoom-indicator.visible{display:block}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5.64 5.64l2.12 2.12M16.24 16.24l2.12 2.12M5.64 18.36l2.12-2.12M16.24 7.76l2.12-2.12"/></svg>
+      ÆTHERION RWS
+    </div>
+    <div class="topbar-mid">
+      <span class="goal-text" id="goalDisplay">Ready</span>
+      <span class="badge badge-idle" id="statusBadge">Idle</span>
+      <span class="badge badge-think" id="thinkBadge"><span class="spinner"></span> Reasoning</span>
+    </div>
+    <div class="topbar-right">
+      <div class="token-display"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> <span class="num" id="tokenCount">0</span></div>
+      <span id="timer">00:00</span>
+    </div>
+  </div>
+
+  <!-- SIDEBAR: SIMULATIONS + AGENTS -->
+  <div class="sidebar">
+    <div class="chat-head">
+      <h3>Simulations</h3>
+      <button class="chat-new-btn" onclick="newChat()">+ New</button>
+    </div>
+    <div class="chat-list" id="chatList">
+      <div style="padding:16px 10px;text-align:center;color:var(--text3);font-size:9px;line-height:1.5">
+        <div style="font-size:18px;margin-bottom:3px;opacity:.3">◉</div>
+        No simulations yet
+      </div>
+    </div>
+    <div class="sb-divider"></div>
+    <div class="sidebar-head">
+      <span>Agents</span>
+      <span id="agentCount" style="color:var(--accent);font-weight:600">0</span>
+    </div>
+    <div class="sidebar-list" id="agentList">
+      <div style="padding:20px 10px;text-align:center;color:var(--text3);font-size:10px;line-height:1.5">
+        <div style="font-size:24px;margin-bottom:4px;opacity:.4">◉</div>
+        <div>Run a simulation to spawn agents</div>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <div class="stat-grid">
+        <div class="stat-item"><span>Running</span><span class="stat-val" id="statRunning" style="color:var(--accent)">0</span></div>
+        <div class="stat-item"><span>Completed</span><span class="stat-val" id="statDone" style="color:var(--green)">0</span></div>
+        <div class="stat-item"><span>Spawned</span><span class="stat-val" id="statSpawned">0</span></div>
+        <div class="stat-item"><span>Tokens</span><span class="stat-val" id="statTokens">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <div class="nav-bar">
+      <div class="nav-item active" data-tab="graph">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="12" cy="6" r="2"/><path d="M7 12h10M12 16V8"/></svg> Graph
+      </div>
+      <div class="nav-item" data-tab="history">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg> History
+      </div>
+      <div class="nav-item" data-tab="console">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 17l6-6-6-6"/><path d="M12 19h8"/></svg> Console
+      </div>
+      <div class="nav-item" data-tab="sim">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 16l4-8 4 4 4-6"/></svg> Sims
+      </div>
+      <div class="nav-item" data-tab="verdict">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> Verdict
+      </div>
+    </div>
+    <div class="graph-container" id="graphContainer">
+      <canvas id="graphCanvas"></canvas>
+
+      <div class="graph-controls" id="graphControls">
+        <div class="gc-group">
+          <button class="gc-btn active" id="btnGlobal" onclick="toggleGraphMode('global')" title="Global graph">◉ Global</button>
+          <button class="gc-btn" id="btnLocal" onclick="toggleGraphMode('local')" title="Local graph">◌ Local</button>
+        </div>
+        <div class="gc-group">
+          <button class="gc-btn" id="btnSearch" onclick="toggleSearch()" title="Search">⌕ Search</button>
+          <button class="gc-btn" id="btnFilters" onclick="toggleFilters()" title="Filters">⊞ Filter</button>
+        </div>
+      </div>
+
+      <div class="search-box" id="searchBox">
+        <input id="searchInput" placeholder="Search agents..." oninput="doSearch(this.value)" onkeydown="if(event.key==='Escape'){event.target.blur();toggleSearch()}">
+        <div class="no-result" id="searchNoResult"></div>
+      </div>
+
+      <div class="filter-bar" id="filterBar">
+        <span class="filter-tag active" data-filter="root" onclick="toggleFilter(this)">Root</span>
+        <span class="filter-tag active" data-filter="agent" onclick="toggleFilter(this)">Agent</span>
+        <span class="filter-tag active" data-filter="sub" onclick="toggleFilter(this)">Sub</span>
+        <span class="filter-tag active" data-filter="micro" onclick="toggleFilter(this)">Micro</span>
+        <span class="filter-tag active" data-filter="debate" onclick="toggleFilter(this)">Debate</span>
+        <span class="filter-tag active" data-filter="sim" onclick="toggleFilter(this)">Sim</span>
+        <span class="filter-tag active" data-filter="evidence" onclick="toggleFilter(this)">Cite</span>
+        <span class="filter-tag" style="opacity:.4;cursor:default;border-color:transparent">|</span>
+        <span class="filter-tag active" data-filter="active" onclick="toggleFilter(this)">Active</span>
+        <span class="filter-tag active" data-filter="done" onclick="toggleFilter(this)">Done</span>
+      </div>
+
+      <div class="graph-legend" id="graphLegend">
+        <div class="legend-row"><span class="legend-dot" style="background:var(--accent)"></span><span class="legend-label">Root</span></div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--green)"></span><span class="legend-label">Agent</span></div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--blue)"></span><span class="legend-label">Sub</span></div>
+        <div class="legend-row"><span class="legend-dot" style="background:#b0b5c0"></span><span class="legend-label">Micro</span></div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--amber)"></span><span class="legend-label">Debate</span></div>
+      </div>
+
+      <div class="zoom-indicator" id="zoomIndicator">100%</div>
+
+      <!-- INPUT OVERLAY -->
+      <div class="input-overlay hidden" id="inputOverlay">
+        <div class="input-box">
+          <h1>ÆTHERION RWS</h1>
+          <div class="sub">Extract seed information from the real world. Spawn autonomous agents that research, debate,<br>and simulate millions of scenarios. Rehearse the future in a digital sandbox.</div>
+          <textarea id="goalInput" placeholder="e.g. Will quantum computing break Bitcoin within 5 years?" rows="2"></textarea>
+          <div class="input-row">
+            <input id="constraintsInput" placeholder="Constraints (e.g. focus on technical feasibility)">
+            <input id="timelineInput" placeholder="Timeline" style="width:110px">
+            <select id="modelSelect" style="width:130px;font-size:10px;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;background:var(--surface);color:var(--text);outline:none;font-family:'Inter',sans-serif;cursor:pointer">
+              <option value="">Auto (Best Available)</option>
+              <option value="deepseek-v4-pro">DeepSeek V4 Pro</option>
+              <option value="deepseek-v4-flash">DeepSeek V4 Flash</option>
+              <option value="claude-opus-4-7">Claude Opus 4.7</option>
+              <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
+              <option value="gpt-4o">GPT-4o</option>
+            </select>
+          </div>
+          <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+            <span style="font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px">Tools</span>
+            <button class="gc-btn" onclick="toggleToolManager()" style="font-size:8px;padding:2px 10px">Manage</button>
+          </div>
+          <div id="toolToggleList" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;justify-content:center"></div>
+          <button class="run-btn" onclick="startRun()">▶ Launch Simulation</button>
+          <div class="shortcut">Press <kbd>Enter</kbd> to run</div>
+        </div>
+      </div>
+
+      <!-- TOOL MANAGER MODAL -->
+      <div class="tool-manager-overlay hidden" id="toolManager" onclick="if(event.target===this)closeToolManager()">
+        <div class="tool-manager-panel">
+          <div class="tm-header">
+            <span style="font-weight:600;font-size:11px">Tool Configuration</span>
+            <button onclick="closeToolManager()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;line-height:1">&times;</button>
+          </div>
+          <div class="tm-list" id="toolManagerList"></div>
+          <div class="tm-add-section">
+            <div style="font-size:10px;font-weight:600;color:var(--text2);margin:8px 0 4px">Add Custom Tool</div>
+            <select id="newToolType" onchange="showToolForm(this.value)" style="width:100%;font-size:9px;padding:5px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font-family:'Inter',sans-serif;margin-bottom:6px">
+              <option value="">Select type...</option>
+              <option value="http">HTTP API</option>
+              <option value="cli">Shell Command</option>
+              <option value="mcp">MCP Server</option>
+            </select>
+            <div id="customToolForm"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT DETAIL PANEL (full-height, scrollable, with chat) -->
+      <div class="agent-detail" id="agentDetail">
+        <div class="ad-header">
+          <div class="ad-h-top">
+            <span class="ad-dot" id="adDot"></span>
+            <span class="ad-name" id="adName">Agent</span>
+            <div class="ad-badges">
+              <span class="ad-badge ad-badge-tk" id="adTokens">0 tk</span>
+              <span class="ad-badge" id="adStatusBadge">idle</span>
+            </div>
+            <button class="ad-close" onclick="selectNode(null);event.stopPropagation()" title="Close">×</button>
+          </div>
+          <div class="ad-mission" id="adMission"></div>
+        </div>
+
+        <div class="ad-scroll" id="adScroll">
+          <div class="ad-section">Findings</div>
+          <div class="ad-body" id="adFindings">In progress...</div>
+
+          <div class="ad-section">Reasoning</div>
+          <div class="ad-body" id="adReasoning">Awaiting reasoning...</div>
+
+          <div class="ad-section">Evidence</div>
+          <div class="ad-evidence" id="adEvidence"></div>
+
+          <div class="ad-section" id="adSearchesSection" style="display:none">Searches</div>
+          <div class="ad-evidence" id="adSearches"></div>
+
+          <div class="ad-section" id="adToolSection" style="display:none">Tool Calls</div>
+          <div class="ad-evidence" id="adTools"></div>
+
+          <div class="ad-section" id="adCitesSection" style="display:none">Cited Agents</div>
+          <div class="ad-cites" id="adCites"></div>
+
+          <div class="ad-section">Risks & Opportunities</div>
+          <div class="ad-tags" id="adTags"></div>
+        </div>
+
+        <!-- Chat with agent -->
+        <div class="ad-chat" id="adChat">
+          <div class="ad-chat-msgs" id="adChatMsgs">
+            <div class="ad-chat-empty">Ask this agent about its research...</div>
+          </div>
+          <div class="ad-chat-input">
+            <input id="adChatInput" placeholder="Ask the agent..." onkeydown="if(event.key==='Enter')sendAgentChat()">
+            <button id="adChatSend" onclick="sendAgentChat()">Send</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="console-view" id="consoleView"></div>
+      <div class="sim-view" id="simView">
+        <div style="text-align:center;color:var(--text3);font-size:10px;padding:40px 0">Simulation results will appear here</div>
+      </div>
+      <div class="verdict-view" id="verdictView">
+        <div style="text-align:center;color:var(--text3);font-size:10px;padding:40px 0">Verdict will appear when simulation completes</div>
+      </div>
+      <div class="status-bar" id="statusBar">
+        <div class="prog"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+        <span class="status-text" id="statusText">Initializing...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="rp-section">
+      <div class="rp-title">Outcome Probabilities</div>
+      <div id="probArea"><div style="font-size:9px;color:var(--text3);text-align:center;padding:12px 0">Awaiting simulation</div></div>
+    </div>
+    <div class="rp-section" style="flex:1;display:flex;flex-direction:column;overflow-y:auto;min-height:0;border-bottom:none">
+      <div class="rp-title">Agent Findings History</div>
+      <div class="history-section" id="historySection"><div id="historyList"></div></div>
+      <div class="rp-title" style="margin-top:4px">Debate & Consensus</div>
+      <div class="debate-panel" id="debateLog"><div style="font-size:9px;color:var(--text3);padding:10px 0">Debate will appear here</div></div>
+    </div>
+    <div class="rp-section" id="verdictSection" style="display:none;flex:1;overflow-y:auto;min-height:0">
+      <div class="rp-title">Final Verdict</div>
+      <div class="verdict-box" id="verdictContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================================================================
+// ÆTHERION RWS — Swarm Intelligence Graph + Chat System
+// ===================================================================
+
+const CFG = {
+  repulsion: 1800, repulsionMin: 800, attraction: 0.004, gravity: 0.0006,
+  damping: 0.88, maxVelocity: 6, linkDistance: 60, linkStrength: 0.08,
+  parentLinkDistance: 40, parentLinkStrength: 0.15, collisionRadius: 4,
+  alpha: 1, alphaDecay: 0.008, alphaMin: 0.01, reheatAlpha: 0.4,
+  maxNodes: 3000, zoomMin: 0.15, zoomMax: 4, labelZoomLevel: 0.5, detailZoomLevel: 1.2,
+  nodeFadeIn: 300,
+};
+
+// ===== VIBRANT ROOT COLOR PALETTE =====
+const ROOT_COLORS = [
+  '#FF3366','#3366FF','#00CC88','#FF8800','#9933FF',
+  '#00CCFF','#FF5500','#2255CC','#00CC55','#7733DD',
+  '#DD4400','#00BBAA','#DD2244','#224466','#667788',
+  '#FF4466','#33DDFF','#FF77CC','#3366FF','#5511BB',
+  '#00DDCC','#6633EE','#FF5599','#DD5533','#00CC77',
+  '#1155CC','#FFBB33','#DD2255','#55AAFF','#8833FF',
+];
+let _colorIdx = 0;
+const _rootColorMap = {};
+
+function hexToHSL(hex) {
+  let r=0,g=0,b=0;
+  hex = hex.replace('#','');
+  if (hex.length===6) { r=parseInt(hex.slice(0,2),16)/255; g=parseInt(hex.slice(2,4),16)/255; b=parseInt(hex.slice(4,6),16)/255; }
+  const max=Math.max(r,g,b), min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if (max===min) { h=s=0; } else {
+    const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min);
+    switch(max) {
+      case r: h=((g-b)/d+(g<b?6:0))/6; break;
+      case g: h=((b-r)/d+2)/6; break;
+      case b: h=((r-g)/d+4)/6; break;
+    }
+  }
+  return { h:h*360, s:s*100, l:l*100 };
+}
+function HSLToHex(h,s,l) {
+  h/=360; s/=100; l/=100;
+  let r,g,b;
+  if (s===0) { r=g=b=l; } else {
+    const h2r=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};
+    const q=l<0.5?l*(1+s):l+s-l*s, p=2*l-q;
+    r=h2r(p,q,h+1/3); g=h2r(p,q,h); b=h2r(p,q,h-1/3);
+  }
+  return '#'+[r,g,b].map(c=>Math.round(c*255).toString(16).padStart(2,'0')).join('');
+}
+function lightenColor(hex, amount) {
+  const hsl = hexToHSL(hex);
+  hsl.l = Math.min(92, hsl.l + amount);
+  if (hsl.s > 50) hsl.s = Math.max(25, hsl.s - amount*0.2);
+  return HSLToHex(hsl.h, hsl.s, hsl.l);
+}
+function darkenColor(hex, amount) {
+  const hsl = hexToHSL(hex);
+  hsl.l = Math.max(8, hsl.l - amount);
+  return HSLToHex(hsl.h, hsl.s, hsl.l);
+}
+function getRootColor(parentId) {
+  if (!_rootColorMap[parentId]) _rootColorMap[parentId] = ROOT_COLORS[_colorIdx++ % ROOT_COLORS.length];
+  return _rootColorMap[parentId];
+}
+
+// ===== STATE =====
+const S = {
+  chats: [], currentChatId: null,
+  agents: new Map(), nodes: [], edges: [],
+  nodeTypeMap: { root:[],agent:[],sub:[],micro:[],debate:[],sim:[],evidence:[],verdict:[] },
+  particles: [], activeEdges: [],
+  selectedId: null, hoveredId: null, focusedId: null,
+  graphMode: 'global',
+  running: 0, done: 0, total: 0, tokens: 0,
+  timer: 0, timerHandle: null, runActive: false,
+  history: [], console: [], seedPlaced: false,
+  simData: null, verdictData: null, debateData: null,
+  filters: new Set(['root','agent','sub','micro','debate','sim','evidence','active','done']),
+  searchQuery: '',
+  cam: { x:0, y:0, zoom:1 },
+  drag: { on:false, node:null, startX:0, startY:0, camX:0, camY:0, nodeStartX:0, nodeStartY:0, moved:false },
+  W: 800, H: 600, cx: 400, cy: 300,
+  eventBuffer: [], eventTimer: null, _edgeSet: new Set(),
+  _savePending: false, _db: null, _dbReady: false,
+  _agentChatLoad: {}, // agentId -> true (loading flag)
+  availableTools: [],
+};
+
+// ===== INDEXED DB =====
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('Aetherion_Graph', 2);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('state')) db.createObjectStore('state', { keyPath: 'id' });
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+async function initDB() {
+  try {
+    S._db = await openDB(); S._dbReady = true;
+    const tx = S._db.transaction('state', 'readonly');
+    const store = tx.objectStore('state');
+    const idx = await new Promise((r) => { const q = store.get('chat_index'); q.onsuccess = () => r(q.result); q.onerror = () => r(null); });
+    if (idx && idx.chats && idx.chats.length) {
+      S.chats = idx.chats;
+      const latest = S.chats.reduce((a,b) => (a.timestamp||0) > (b.timestamp||0) ? a : b);
+      await loadChat(latest.id);
+    } else {
+      document.getElementById('inputOverlay').classList.remove('hidden');
+    }
+    renderChatList();
+  } catch(e) { S._dbReady = false; }
+}
+async function loadChat(chatId) {
+  if (chatId === S.currentChatId) return;
+  if (S.runActive) return;
+  await saveCurrentChat();
+  try {
+    const tx = S._db.transaction('state', 'readonly');
+    const store = tx.objectStore('state');
+    const data = await new Promise((r) => { const q = store.get('chat_'+chatId); q.onsuccess = () => r(q.result); q.onerror = () => r(null); });
+    if (!data) return;
+    restoreChatState(data);
+    S.currentChatId = chatId;
+    renderChatList(); updateUI();
+  } catch(e) { console.error('loadChat', e); }
+}
+function restoreChatState(data) {
+  clearState();
+  _colorIdx = data._colorIdx || 0;
+  for (const k in _rootColorMap) delete _rootColorMap[k];
+  if (data._rootColorMap) Object.assign(_rootColorMap, data._rootColorMap);
+  const agents = data.agents || {};
+  for (const [id, nodeData] of Object.entries(agents)) {
+    const n = { ...nodeData };
+    S.agents.set(id, n); S.nodes.push(n);
+    const type = (n._type || getNodeType(n));
+    if (!S.nodeTypeMap[type]) S.nodeTypeMap[type] = [];
+    if (!S.nodeTypeMap[type].includes(id)) S.nodeTypeMap[type].push(id);
+    if (n.status === 'complete') S.done++;
+    else if (n.status === 'researching' || n.status === 'spawned') S.running++;
+    S.total++;
+  }
+  S.edges = data.edges || [];
+  S._edgeSet = new Set(S.edges.map(e => e.source+'-'+e.target));
+  S.history = data.history || []; S.console = data.console || [];
+  S.simData = data.simData || null; S.verdictData = data.verdictData || null;
+  S.debateData = data.debateData || null; S.tokens = data.tokens || 0;
+  S.seedPlaced = data.seedPlaced || false;
+  document.getElementById('goalDisplay').textContent = data.goal || 'Ready';
+  document.getElementById('inputOverlay').classList.add('hidden');
+  const st = data.status || 'idle';
+  document.getElementById('statusBadge').className = st==='running'?'badge badge-run':'badge badge-idle';
+  document.getElementById('statusBadge').textContent = st==='running'?'Running':(st==='complete'?'Complete':'Idle');
+  document.getElementById('thinkBadge').style.display = 'none';
+  if (S.verdictData) { renderVerdictUI(S.verdictData); renderVerdictFullPage(S.verdictData); }
+  if (S.simData) renderSimUI(S.simData);
+  if (S.debateData) renderDebateUI(S.debateData);
+  if (S.history.length) { renderHistory(); document.getElementById('historySection').classList.add('visible'); }
+  document.getElementById('graphLegend').classList.add('visible');
+  reheatSimulation(0.5);
+}
+function clearState() {
+  S.agents.clear(); S.nodes = []; S.edges = []; S._edgeSet = new Set();
+  S.nodeTypeMap = { root:[],agent:[],sub:[],micro:[],debate:[],sim:[],evidence:[],verdict:[] };
+  S.particles = []; S.activeEdges = [];
+  S.running=0; S.done=0; S.total=0; S.tokens=0;
+  S.selectedId=null; S.hoveredId=null; S.focusedId=null;
+  S.history=[]; S.console=[]; S.runActive=false; S.timer=0;
+  clearInterval(S.timerHandle); document.getElementById('timer').textContent='00:00';
+  S.seedPlaced=false; S.simData=null; S.verdictData=null; S.debateData=null;
+  S.cam={x:0,y:0,zoom:1}; CFG.alpha=1;
+  document.getElementById('agentDetail').classList.remove('show');
+  document.getElementById('consoleView').innerHTML = '';
+  document.getElementById('debateLog').innerHTML = '<div style="font-size:9px;color:var(--text3);padding:10px 0">Awaiting simulation</div>';
+  document.getElementById('probArea').innerHTML = '<div style="font-size:9px;color:var(--text3);text-align:center;padding:12px 0">Awaiting simulation</div>';
+  document.getElementById('verdictSection').style.display = 'none';
+  document.getElementById('simView').innerHTML = '<div style="text-align:center;color:var(--text3);font-size:10px;padding:40px 0">Waiting...</div>';
+  document.getElementById('verdictView').innerHTML = '<div style="text-align:center;color:var(--text3);font-size:10px;padding:40px 0">Verdict will appear when simulation completes</div>';
+  document.getElementById('historySection').classList.remove('visible');
+  document.getElementById('statusBar').classList.remove('visible');
+  document.getElementById('searchInput').value=''; S.searchQuery=''; document.getElementById('searchNoResult').textContent='';
+  updateUI(); renderChatList();
+}
+async function saveCurrentChat() {
+  if (!S.currentChatId || !S._dbReady) return;
+  const agentsData = {}; S.agents.forEach((n, id) => { agentsData[id] = { ...n }; });
+  const goal = document.getElementById('goalDisplay').textContent;
+  const state = {
+    id: 'chat_'+S.currentChatId, chatId: S.currentChatId, goal, timestamp: Date.now(),
+    status: S.runActive ? 'running' : (S.done > 0 ? 'complete' : 'idle'),
+    agents: agentsData, edges: S.edges, history: S.history, console: S.console,
+    simData: S.simData, verdictData: S.verdictData, debateData: S.debateData,
+    tokens: S.tokens, agentCount: S.nodes.length,
+    _colorIdx, _rootColorMap: {..._rootColorMap}, seedPlaced: S.seedPlaced,
+  };
+  try { const tx = S._db.transaction('state','readwrite'); tx.objectStore('state').put(state); updateChatIndex(); } catch(e) {}
+}
+async function updateChatIndex() {
+  if (!S._dbReady) return;
+  try {
+    if (S.currentChatId) {
+      const goal = document.getElementById('goalDisplay').textContent;
+      const existing = S.chats.findIndex(c => c.id === S.currentChatId);
+      const entry = { id: S.currentChatId, goal: goal!=='Ready'?goal:'', timestamp: Date.now(), agentCount: S.nodes.length, status: S.runActive?'running':(S.done>0?'complete':'idle'), tokens: S.tokens };
+      if (existing >= 0) S.chats[existing] = entry; else S.chats.push(entry);
+    }
+    const tx = S._db.transaction('state','readwrite');
+    tx.objectStore('state').put({ id:'chat_index', chats: S.chats });
+    renderChatList();
+  } catch(e) {}
+}
+async function deleteChat(chatId, e) {
+  e.stopPropagation();
+  if (S.runActive) return;
+  try {
+    const tx = S._db.transaction('state','readwrite');
+    tx.objectStore('state').delete('chat_'+chatId);
+    S.chats = S.chats.filter(c => c.id !== chatId);
+    await new Promise(r => { const q = tx.objectStore('state').put({ id:'chat_index', chats:S.chats }); q.onsuccess=()=>r(); q.onerror=()=>r(); });
+    renderChatList();
+    if (S.currentChatId === chatId) {
+      S.currentChatId = null;
+      if (S.chats.length) await loadChat(S.chats[0].id);
+      else { clearState(); document.getElementById('inputOverlay').classList.remove('hidden'); document.getElementById('goalDisplay').textContent='Ready'; }
+    }
+  } catch(e) {}
+}
+function newChat() {
+  if (S.runActive) return;
+  saveCurrentChat(); clearState();
+  _colorIdx = 0; for (const k in _rootColorMap) delete _rootColorMap[k];
+  S.currentChatId = null;
+  document.getElementById('goalDisplay').textContent = 'New Simulation';
+  document.getElementById('inputOverlay').classList.remove('hidden');
+  document.getElementById('goalInput').value=''; document.getElementById('constraintsInput').value=''; document.getElementById('timelineInput').value='';
+  document.getElementById('goalInput').focus();
+  renderChatList();
+}
+function formatRelTime(ts) {
+  if (!ts) return '';
+  const d = Date.now() - ts;
+  if (d < 60000) return 'just now';
+  if (d < 3600000) return Math.floor(d/60000)+'m ago';
+  if (d < 86400000) return Math.floor(d/3600000)+'h ago';
+  return new Date(ts).toLocaleDateString();
+}
+function renderChatList() {
+  const el = document.getElementById('chatList');
+  if (!S.chats.length) { el.innerHTML = '<div style="padding:16px 10px;text-align:center;color:var(--text3);font-size:9px;line-height:1.5"><div style="font-size:18px;margin-bottom:3px;opacity:.3">◉</div>No simulations yet</div>'; return; }
+  const sorted = [...S.chats].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+  el.innerHTML = sorted.map(c => {
+    const a = c.id===S.currentChatId?'active':'';
+    const dc = c.status==='running'?'var(--green)':(c.status==='complete'?'var(--accent)':'var(--text3)');
+    return `<div class="chat-item ${a}" onclick="loadChat('${c.id}')"><span class="cdot" style="background:${dc}"></span><div class="chat-info"><div class="chat-goal">${(c.goal||'Untitled').slice(0,42)}</div><div class="chat-meta"><span>${formatRelTime(c.timestamp)} · ${c.agentCount||0} agents</span></div></div><button class="chat-del" onclick="deleteChat('${c.id}', event)">✕</button></div>`;
+  }).join('');
+}
+
+// ===== NODE/EDGE TYPES & COLORS =====
+function getNodeType(n) {
+  if (n._type) return n._type;
+  if (n.debate) return 'debate';
+  if (n.sim||n._type==='sim') return 'sim';
+  if (n.verdict||n._type==='verdict') return 'verdict';
+  if (n.evidence||n._type==='evidence') return 'evidence';
+  if (n.depth===0||n.depth===1) return 'root';
+  if (n.micro) return 'micro';
+  if (n.depth===2) return 'agent';
+  return 'sub';
+}
+function getNodeColor(n) {
+  if (n._assignedColor) return n._assignedColor;
+  // Use backend-provided color if available (from SSE agent_spawned event)
+  if (n.color) { n._assignedColor = n.color; return n.color; }
+  const type = getNodeType(n);
+  if (type==='debate') return '#f0a500';
+  if (type==='sim') return n._typeColor||'#6c5ce7';
+  if (type==='verdict') return '#6c5ce7';
+  if (type==='evidence') return '#a0a5b0';
+  if (type==='micro') { n._assignedColor='#95a5a6'; return '#95a5a6'; }
+  if (type==='root') { const c=getRootColor(n.parent_id||n.id); n._assignedColor=c; return c; }
+  if ((type==='agent'||type==='sub')&&n.parent_id) {
+    const p=S.agents.get(n.parent_id);
+    if (p) { const l=type==='agent'?25:40; n._assignedColor=lightenColor(getNodeColor(p),l); return n._assignedColor; }
+  }
+  if (type==='agent') { n._assignedColor='#00b894'; return '#00b894'; }
+  if (type==='sub') { n._assignedColor='#3498db'; return '#3498db'; }
+  return '#6c5ce7';
+}
+function getNodeSize(n) {
+  const base = { root:24, agent:15, sub:11, micro:8, debate:14, sim:13, evidence:7, verdict:18 };
+  const s = base[getNodeType(n)]||10;
+  if (n.status==='researching') return s*1.1;
+  if (n.status==='complete') return s;
+  if (n.status==='spawned') return s*0.9;
+  return s;
+}
+function getEdgeStyle(edge) {
+  switch (edge.type) {
+    case 'parent': return { color:'#8890a8', width:2.0, dash:[] };
+    case 'collab': return { color:'#9ea4b8', width:1.2, dash:[5,3] };
+    case 'blackboard': return { color:'#9ea4b8', width:1.0, dash:[3,4] };
+    case 'debate': return { color:'#f0a500', width:1.8, dash:[] };
+    case 'evidence': return { color:'#9ea4b8', width:0.8, dash:[2,2] };
+    case 'sim': return { color:'#8b7cf0', width:1.4, dash:[4,3] };
+    default: return { color:'#9ea4b8', width:1.0, dash:[] };
+  }
+}
+
+// ===== FORCE SIMULATION =====
+function simTick() {
+  const a = CFG.alpha;
+  if (a < CFG.alphaMin && !S.drag.node) return;
+  const nodes = S.nodes, n = nodes.length;
+  if (!n) return;
+  const dmp = CFG.damping, mV = CFG.maxVelocity, cx=S.W/2, cy=S.H/2;
+  const gv = CFG.gravity, rp = CFG.repulsion * a;
+  const lD = CFG.linkDistance, lS = CFG.linkStrength * a;
+  const pD = CFG.parentLinkDistance, pS = CFG.parentLinkStrength * a;
+  const cR = CFG.collisionRadius, thr = 300;
+  for (let i=0;i<n;i++) {
+    const a=nodes[i]; if (a._pinned) continue;
+    for (let j=i+1;j<n;j++) {
+      const b=nodes[j];
+      let dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy)||1;
+      if (d>thr) continue;
+      const f=rp/(d*d+1), fx=(dx/d)*f, fy=(dy/d)*f;
+      a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy;
+    }
+  }
+  for (const e of S.edges) {
+    const s=S.agents.get(e.source), t=S.agents.get(e.target);
+    if (!s||!t) continue;
+    let dx=t.x-s.x, dy=t.y-s.y, d=Math.sqrt(dx*dx+dy*dy)||1;
+    const iP = e.type==='parent'||e.type==='hierarchy';
+    const tD = iP ? pD : lD, tS = iP ? pS : lS;
+    const D = d-tD, f=D*tS, fx=(dx/d)*f, fy=(dy/d)*f;
+    if (!s._pinned) { s.vx+=fx; s.vy+=fy; }
+    if (!t._pinned) { t.vx-=fx; t.vy-=fy; }
+  }
+  for (let i=0;i<n;i++) {
+    const a=nodes[i]; if (a._pinned) continue;
+    for (let j=i+1;j<n;j++) {
+      const b=nodes[j];
+      let dx=a.x-b.x, dy=a.y-b.y, d=Math.sqrt(dx*dx+dy*dy)||1;
+      const mD = 30+cR;
+      if (d<mD) { const o=(mD-d)*0.3, fx=(dx/d)*o, fy=(dy/d)*o; a.vx+=fx; a.vy+=fy; b.vx-=fx; b.vy-=fy; }
+    }
+  }
+  for (const nd of nodes) {
+    if (nd._pinned) continue;
+    nd.vx += (cx-nd.x)*gv; nd.vy += (cy-nd.y)*gv;
+    nd.x+=nd.vx; nd.y+=nd.vy;
+    nd.vx*=dmp; nd.vy*=dmp;
+    const sp = Math.sqrt(nd.vx*nd.vx+nd.vy*nd.vy);
+    if (sp>mV) { nd.vx=(nd.vx/sp)*mV; nd.vy=(nd.vy/sp)*mV; }
+    if (nd.x<30){nd.x=31;nd.vx*=-0.5} if (nd.x>S.W-30){nd.x=S.W-31;nd.vx*=-0.5}
+    if (nd.y<30){nd.y=31;nd.vy*=-0.5} if (nd.y>S.H-30){nd.y=S.H-31;nd.vy*=-0.5}
+  }
+  if (!S.drag.node) CFG.alpha = Math.max(CFG.alphaMin, CFG.alpha - CFG.alphaDecay);
+}
+function reheatSimulation(amt) { CFG.alpha = Math.min(1, amt || CFG.reheatAlpha); }
+
+// ===== CANVAS RENDERER =====
+const canvas = document.getElementById('graphCanvas');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio||1;
+  canvas.width=r.width*dpr; canvas.height=r.height*dpr;
+  canvas.style.width=r.width+'px'; canvas.style.height=r.height+'px';
+  ctx.scale(dpr, dpr);
+  S.W=r.width; S.H=r.height; S.cx=r.width/2; S.cy=r.height/2;
+}
+function drawGraph() {
+  const w=S.W||800, h=S.H||600;
+  ctx.clearRect(0,0,w,h);
+  const bg=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.7);
+  bg.addColorStop(0,'#f8f9fd'); bg.addColorStop(1,'#f0f1f6');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+  if (!S.nodes.length) { drawEmptyHint(); return; }
+  const zoom=S.cam.zoom, hId=S.hoveredId, sId=S.selectedId;
+  const fId=S.graphMode==='local'?S.focusedId:null;
+  const vNodes=getVisibleNodes(), vSet=new Set(vNodes);
+  let hl=null;
+  if (hId&&vSet.has(hId)) hl=collectNeighborhood(hId,1).nodes;
+  else if (fId) hl=collectNeighborhood(fId,2).nodes;
+  ctx.save(); ctx.translate(S.cam.x,S.cam.y); ctx.scale(zoom,zoom);
+  const dE=new Set();
+  function drEdge(s,t,st,al) {
+    const k=s.id<t.id?s.id+'-'+t.id:t.id+'-'+s.id; if (dE.has(k)) return; dE.add(k);
+    ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(t.x,t.y);
+    ctx.strokeStyle=st.color; ctx.lineWidth=st.width*(zoom<0.4?0.5:1);
+    ctx.globalAlpha=al; if (st.dash.length) ctx.setLineDash(st.dash);
+    ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha=1;
+  }
+  for (const e of S.edges) {
+    const s=S.agents.get(e.source), t=S.agents.get(e.target);
+    if (!s||!t||!vSet.has(e.source)||!vSet.has(e.target)) continue;
+    const st=getEdgeStyle(e);
+    let al=0.65;
+    if (hl&&hl.has(e.source)&&hl.has(e.target)) al=0.85;
+    else if (hl) al=0.12;
+    else if (zoom<0.3) al=0.2;
+    else if (zoom<0.6) al=e.type==='parent'?0.5:0.2;
+    if (fId&&!hl?.has(e.source)&&!hl?.has(e.target)) al*=0.3;
+    drEdge(s,t,st,al);
+  }
+  for (const ae of S.activeEdges) {
+    const s=S.agents.get(ae.source), t=S.agents.get(ae.target);
+    if (!s||!t) continue;
+    drEdge(s,t,{color:ae.color||'#fdcb6e',width:(ae.width||1.5)*(1+Math.sin(Date.now()*0.003)*0.3),dash:[]},ae.alpha||0.5);
+  }
+  const sorted=[...S.nodes].filter(n=>vSet.has(n.id));
+  sorted.sort((a,b)=>{if(a.id===hId)return 1;if(b.id===hId)return -1;if(a.id===sId)return 1;if(b.id===sId)return -1;return 0;});
+  for (const n of sorted) {
+    const type=getNodeType(n), color=getNodeColor(n), r=getNodeSize(n);
+    const iH=n.id===hId, iS=n.id===sId, iA=n.status==='researching'||n.status==='spawned', iC=n.status==='complete';
+    let al=0.92;
+    if (hl&&!hl.has(n.id)) al=0.1;
+    else if (hl&&iH) al=1;
+    else if (hl&&hl.has(n.id)) al=0.92;
+    else if (zoom<0.3) al=0.45;
+    if (fId&&!hl?.has(n.id)) al=0.08;
+    if (n._spawnTime) { const e=Date.now()-n._spawnTime; if (e<CFG.nodeFadeIn) al*=e/CFG.nodeFadeIn; }
+    // Glow
+    if (iA||iH||iS) {
+      const gR=r+(iH?10:6); const g=ctx.createRadialGradient(n.x,n.y,r*0.5,n.x,n.y,gR);
+      g.addColorStop(0,color+'33'); g.addColorStop(1,color+'00');
+      ctx.beginPath(); ctx.arc(n.x,n.y,gR,0,Math.PI*2);
+      ctx.fillStyle=g; ctx.globalAlpha=iH?0.5:0.2; ctx.fill(); ctx.globalAlpha=1;
+    }
+    // Pulse
+    if (iA) {
+      const pR=r+4+Math.sin(Date.now()*0.004)*2.5;
+      ctx.beginPath(); ctx.arc(n.x,n.y,pR,0,Math.PI*2);
+      ctx.strokeStyle=color; ctx.lineWidth=1;
+      ctx.globalAlpha=0.15+Math.sin(Date.now()*0.004)*0.12; ctx.stroke(); ctx.globalAlpha=1;
+    }
+    ctx.globalAlpha=al;
+    // Circle with gradient
+    const fc=iA?color:(iC?lightenColor(color,55):color);
+    const gC=lightenColor(fc,30);
+    const ng=ctx.createRadialGradient(n.x-r*0.3,n.y-r*0.3,r*0.1,n.x,n.y,r);
+    ng.addColorStop(0,gC); ng.addColorStop(0.7,fc); ng.addColorStop(1,darkenColor(fc,15));
+    ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2);
+    ctx.fillStyle=ng; ctx.globalAlpha=al*(iH?1:0.88); ctx.fill();
+    // Inner highlight
+    if (!iA) {
+      const hg=ctx.createRadialGradient(n.x-r*0.3,n.y-r*0.35,r*0.05,n.x-r*0.3,n.y-r*0.35,r*0.6);
+      hg.addColorStop(0,'rgba(255,255,255,0.35)'); hg.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.beginPath(); ctx.arc(n.x,n.y,r,0,Math.PI*2); ctx.fillStyle=hg; ctx.fill();
+    }
+    // Stroke
+    ctx.strokeStyle=iH?'#2c3e50':(iS?'#6c5ce7':color);
+    ctx.lineWidth=iH?2.5:(iS?2:1.2);
+    ctx.globalAlpha=iH?1:(iS?0.9:al*0.6); ctx.stroke(); ctx.globalAlpha=1;
+    // Label
+    if (zoom>=CFG.labelZoomLevel) {
+      let txt='', sz=8;
+      if (zoom>=CFG.detailZoomLevel) { txt=n.label||n.id.slice(0,6); sz=type==='root'?9:(type==='micro'?7:8); }
+      else if (zoom>=0.5) { txt=(n.label||n.id).slice(0,type==='root'?8:4); sz=type==='root'?8:7; }
+      else if (type==='root') { txt=(n.label||n.id).slice(0,4); sz=7; }
+      if (txt) {
+        const la=Math.min(1,Math.max(0,(zoom-0.4)/0.3));
+        ctx.fillStyle=iH?'#1a1d2e':(al>0.5?'#5a6072':'#949aae');
+        ctx.globalAlpha=la*al; ctx.font=sz+'px Inter,sans-serif';
+        ctx.textAlign='center'; ctx.textBaseline='top';
+        ctx.fillText(txt,n.x,n.y+r+3); ctx.globalAlpha=1;
+      }
+    }
+  }
+  ctx.restore();
+  if (S.particles&&S.particles.length) {
+    for (let i=S.particles.length-1;i>=0;i--) {
+      const p=S.particles[i]; p.x+=p.vx*0.02; p.y+=p.vy*0.02; p.life-=0.025;
+      if (p.life<=0) { S.particles.splice(i,1); continue; }
+      const sx=p.x*S.cam.zoom+S.cam.x, sy=p.y*S.cam.zoom+S.cam.y;
+      ctx.beginPath(); ctx.arc(sx,sy,2*S.cam.zoom,0,Math.PI*2);
+      ctx.fillStyle=p.color; ctx.globalAlpha=p.life*0.5; ctx.fill(); ctx.globalAlpha=1;
+    }
+  }
+  document.getElementById('zoomIndicator').textContent=Math.round(zoom*100)+'%';
+}
+function drawEmptyHint() {
+  ctx.fillStyle='#949aae'; ctx.globalAlpha=0.3;
+  ctx.font='13px Inter,sans-serif'; ctx.textAlign='center';
+  ctx.fillText('Graph will appear here once agents fire', S.cx, S.cy);
+  ctx.globalAlpha=1;
+}
+function getVisibleNodes() {
+  if (S.graphMode==='local'&&S.focusedId) return [...collectNeighborhood(S.focusedId,2).nodes].filter(id=>applyFilters(id));
+  return S.nodes.filter(n=>applyFilters(n.id)).map(n=>n.id);
+}
+function collectNeighborhood(nodeId, depth=1) {
+  const n=new Set([nodeId]); let f=[nodeId];
+  for (let d=0;d<depth;d++) {
+    const nx=[];
+    for (const id of f) {
+      for (const e of S.edges) { if (e.source===id&&!n.has(e.target)) { n.add(e.target); nx.push(e.target); } if (e.target===id&&!n.has(e.source)) { n.add(e.source); nx.push(e.source); } }
+      const a=S.agents.get(id);
+      if (a) { if (a.parent_id&&!n.has(a.parent_id)) { n.add(a.parent_id); nx.push(a.parent_id); } for (const c of S.nodes) if (c.parent_id===id&&!n.has(c.id)) { n.add(c.id); nx.push(c.id); } }
+    }
+    f=nx; if (!f.length) break;
+  }
+  return { nodes: n };
+}
+function applyFilters(id) {
+  const n=S.agents.get(id); if (!n) return false;
+  const t=getNodeType(n);
+  if (!S.filters.has(t)) return false;
+  if (!S.filters.has('active')&&(n.status==='researching'||n.status==='spawned')) return false;
+  if (!S.filters.has('done')&&n.status==='complete') return false;
+  if (S.searchQuery) { const q=S.searchQuery.toLowerCase(); if (!(n.label||'').toLowerCase().includes(q)&&!(n.hypothesis||'').toLowerCase().includes(q)&&!n.id.toLowerCase().includes(q)) return false; }
+  return true;
+}
+
+// ===== INPUT HANDLER =====
+const container = document.getElementById('graphContainer');
+function screenToWorld(sx,sy) { return { x:(sx-S.cam.x)/S.cam.zoom, y:(sy-S.cam.y)/S.cam.zoom }; }
+function getNodeHit(sx,sy) {
+  const w=screenToWorld(sx,sy), v=new Set(getVisibleNodes());
+  for (let i=S.nodes.length-1;i>=0;i--) { const n=S.nodes[i]; if (!v.has(n.id)) continue; const r=getNodeSize(n); if ((w.x-n.x)**2+(w.y-n.y)**2<=(r+6)*(r+6)) return n; }
+  return null;
+}
+container.addEventListener('mousedown',e=>{
+  const r=container.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const h=getNodeHit(mx,my); S.drag.moved=false;
+  if (h) { S.drag.node=h; S.drag.on=true; S.drag.nodeStartX=h.x; S.drag.nodeStartY=h.y; S.drag.startX=mx; S.drag.startY=my; h._pinned=true; container.classList.add('dragging'); }
+  else { S.drag.on=true; S.drag.node=null; S.drag.startX=mx; S.drag.startY=my; S.drag.camX=S.cam.x; S.drag.camY=S.cam.y; container.classList.add('dragging'); }
+});
+container.addEventListener('mousemove',e=>{
+  const r=container.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  if (S.drag.node) { const w=screenToWorld(mx,my), ws=screenToWorld(S.drag.startX,S.drag.startY); S.drag.node.x=S.drag.nodeStartX+(w.x-ws.x); S.drag.node.y=S.drag.nodeStartY+(w.y-ws.y); S.drag.moved=true; reheatSimulation(0.15); }
+  else if (S.drag.on) { S.cam.x=S.drag.camX+(mx-S.drag.startX); S.cam.y=S.drag.camY+(my-S.drag.startY); S.drag.moved=true; }
+  else { const h=getNodeHit(mx,my); if (h&&h.id!==S.hoveredId) { S.hoveredId=h.id; container.style.cursor='pointer'; } else if (!h) { S.hoveredId=null; container.style.cursor='grab'; } }
+});
+container.addEventListener('mouseup',e=>{
+  const r=container.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  if (S.drag.node) { S.drag.node._pinned=false; if (Math.abs(mx-S.drag.startX)<4&&Math.abs(my-S.drag.startY)<4&&!S.drag.moved) selectNode(S.drag.node.id); }
+  else if (S.drag.on&&!S.drag.moved) selectNode(null);
+  S.drag.on=false; S.drag.node=null; S.drag.moved=false; container.classList.remove('dragging');
+});
+container.addEventListener('mouseleave',()=>{S.hoveredId=null;container.style.cursor='grab';});
+container.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=container.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const dz=e.deltaY>0?0.88:1.12, nz=Math.max(CFG.zoomMin,Math.min(CFG.zoomMax,S.cam.zoom*dz));
+  S.cam.x=mx-(mx-S.cam.x)*(nz/S.cam.zoom); S.cam.y=my-(my-S.cam.y)*(nz/S.cam.zoom);
+  S.cam.zoom=nz;
+},{passive:false});
+document.addEventListener('keydown',e=>{
+  if (e.key==='Escape') { if (S.selectedId) selectNode(null); else if (S.searchQuery) toggleSearch(); else if (S.graphMode==='local') toggleGraphMode('global'); }
+  if (e.key==='Enter'&&!document.getElementById('inputOverlay').classList.contains('hidden')) startRun();
+  if (e.key==='f'&&(e.metaKey||e.ctrlKey)) { e.preventDefault(); toggleSearch(); }
+});
+
+// ===== GRAPH CONTROLS =====
+function toggleGraphMode(m) { S.graphMode=m; document.getElementById('btnGlobal').classList.toggle('active',m==='global'); document.getElementById('btnLocal').classList.toggle('active',m==='local'); if (m==='local'&&!S.focusedId&&S.selectedId) S.focusedId=S.selectedId; else if (m==='global') S.focusedId=null; reheatSimulation(0.3); }
+function toggleFilters() { document.getElementById('filterBar').classList.toggle('visible'); }
+function toggleSearch() { const b=document.getElementById('searchBox'); b.classList.toggle('visible'); if (b.classList.contains('visible')) document.getElementById('searchInput').focus(); else { S.searchQuery=''; document.getElementById('searchNoResult').textContent=''; } }
+function toggleFilter(el) { el.classList.toggle('active'); (el.classList.contains('active')?S.filters.add:S.filters.delete)(el.dataset.filter); }
+function doSearch(q) {
+  S.searchQuery=q.trim(); const nr=document.getElementById('searchNoResult');
+  if (!S.searchQuery) { nr.textContent=''; return; }
+  const m=S.nodes.filter(n=>(n.label||'').toLowerCase().includes(S.searchQuery)||(n.hypothesis||'').toLowerCase().includes(S.searchQuery));
+  if (!m.length) { nr.textContent='No agents found'; return; }
+  nr.textContent=''; const t=m[0];
+  S.cam.x=S.W/2-t.x*S.cam.zoom; S.cam.y=S.H/2-t.y*S.cam.zoom; selectNode(t.id); S.hoveredId=t.id;
+  setTimeout(()=>{if(S.hoveredId===t.id)S.hoveredId=null;},1500);
+}
+
+// ===== NODE/EDGE MANAGEMENT =====
+function addNode(d) {
+  if (S.nodes.length>=CFG.maxNodes) return;
+  const cx=S.cx||400, cy=S.cy||250;
+  let sx,sy;
+  if (!S.seedPlaced&&d.depth<=1) { sx=cx; sy=cy; S.seedPlaced=true; }
+  else if (d.parent_id&&S.agents.has(d.parent_id)) { const p=S.agents.get(d.parent_id); sx=p.x+(Math.random()-0.5)*30; sy=p.y+(Math.random()-0.5)*30; }
+  else { sx=cx+(Math.random()-0.5)*200; sy=cy+(Math.random()-0.5)*150; }
+  const n={id:d.id,label:d.label||d.id.slice(0,6),parent_id:d.parent_id||null,depth:d.depth||0,color:d.color||null,x:sx,y:sy,vx:(Math.random()-0.5)*2,vy:(Math.random()-0.5)*2,status:'spawned',hypothesis:d.hypothesis||'',reasoning:'',evidence:[],findings:'',risks:[],opps:[],cites:[],score:0.5,confidence:0.5,searches:d.searches||[],micro:d.micro||false,_tokens:0,_chatHistory:[],_spawnTime:Date.now(),_pinned:false,_type:d._type||null,_assignedColor:null};
+  S.agents.set(n.id,n); S.nodes.push(n);
+  const t=getNodeType(n);
+  if (!S.nodeTypeMap[t]) S.nodeTypeMap[t]=[];
+  if (!S.nodeTypeMap[t].includes(n.id)) S.nodeTypeMap[t].push(n.id);
+  S.total++;
+  if (d.status==='complete') { n.status='complete'; S.done++; } else S.running++;
+  if (n.parent_id&&S.agents.has(n.parent_id)) addEdge(n.parent_id,n.id,'parent');
+  spawnParticlesNode(sx,sy,getNodeColor(n),n.parent_id?6:12);
+  reheatSimulation(); updateUI(); scheduleSave();
+}
+function addEdge(source,target,type='parent') { const k=source<target?source+'-'+target:target+'-'+source; if (S._edgeSet.has(k)) return; S._edgeSet.add(k); S.edges.push({source,target,type}); }
+function addActiveEdge(src,tgt,color,dur) { const ae={source:src,target:tgt,color:color||'#fdcb6e',alpha:0.6,width:1.5}; S.activeEdges.push(ae); if (dur) setTimeout(()=>{const i=S.activeEdges.indexOf(ae);if(i>=0)S.activeEdges.splice(i,1);},dur); }
+function completeNode(d) {
+  const n=S.agents.get(d.id); if (!n) return;
+  n.status='complete'; n.score=d.score||n.score; n.findings=d.findings||''; n.reasoning=d.reasoning||'';
+  n.evidence=d.evidence_points||[]; n.risks=d.risks||[]; n.opps=d.opportunities||[];
+  n.cites=d.cites||[]; n.searches=d.searches||[];
+  if (d.tool_calls) {
+    if (!n.tool_calls) n.tool_calls = [];
+    for (const tc of d.tool_calls) {
+      if (!n.tool_calls.find(x=>x.tool_name===tc.tool_name&&x.duration_ms===tc.duration_ms)) {
+        n.tool_calls.push(tc);
+      }
+    }
+  }
+  n._tokens = (d.findings?200:0)+(d.reasoning?300:0);
+  n._spawnTime=Date.now();
+  S.running=Math.max(0,S.running-1); S.done++;
+  S.tokens += n._tokens;
+  if (d.label&&d.findings) { S.history.push({agent:d.label,text:(d.findings||'').slice(0,150),id:d.id,depth:n.depth,score:d.score}); renderHistory(); }
+  if (S.selectedId===d.id) updateAgentDetailPanel(d.id);
+  scheduleSave(); updateUI();
+}
+function updateNode(d) { const n=S.agents.get(d.id); if (n) { n.status=d.status||n.status; if (S.selectedId===d.id) updateAgentDetailPanel(d.id); updateUI(); } }
+function receiveEdges(d) {
+  if (!d.edges) return;
+  S.edges=S.edges.filter(e=>e.type!=='citation'&&e.type!=='collab');
+  S._edgeSet=new Set(S.edges.map(e=>e.source+'-'+e.target));
+  for (const e of d.edges) { const s=Array.isArray(e)?e[0]:e.source, t=Array.isArray(e)?e[1]:e.target, ty=Array.isArray(e)?(e[2]||'collab'):(e.type||'collab'); addEdge(s,t,ty); }
+  scheduleSave();
+}
+function spawnParticlesNode(x,y,color,count) { for (let i=0;i<count;i++) { const a=Math.random()*Math.PI*2, sp=15+Math.random()*35; S.particles.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color}); } }
+
+// ===== AGENT DETAIL PANEL (scrollable, full data, chat) =====
+function selectNode(id) {
+  if (id==null) { S.selectedId=null; S.focusedId=null; document.getElementById('agentDetail').classList.remove('show'); if (S.graphMode==='local') toggleGraphMode('global'); return; }
+  // Always select the node — don't toggle. Only canvas bg click or close button closes.
+  S.selectedId=id;
+  if (S.graphMode==='local') S.focusedId=S.selectedId;
+  const n=S.agents.get(id);
+  if (!n) { document.getElementById('agentDetail').classList.remove('show'); return; }
+  document.getElementById('agentDetail').classList.add('show');
+  updateAgentDetailPanel(id);
+  reheatSimulation(0.15);
+}
+function updateAgentDetailPanel(id) {
+  const n=S.agents.get(id); if (!n) return;
+  const color=getNodeColor(n);
+  document.getElementById('adDot').style.background=color;
+  document.getElementById('adName').textContent=n.label||'Agent';
+  const type=getNodeType(n);
+  const tokenTk = n._tokens||0;
+  document.getElementById('adTokens').textContent = tokenTk+' tk';
+  const stBadge=document.getElementById('adStatusBadge');
+  if (n.status==='complete') { stBadge.className='ad-badge ad-badge-done'; stBadge.textContent='done'; }
+  else if (n.status==='researching') { stBadge.className='ad-badge ad-badge-run'; stBadge.textContent='run'; }
+  else { stBadge.className='ad-badge ad-badge-tk'; stBadge.textContent=n.status; }
+  document.getElementById('adMission').textContent = n.hypothesis||'No mission assigned';
+  document.getElementById('adFindings').textContent = n.findings||'In progress...';
+  document.getElementById('adReasoning').textContent = n.reasoning||'Awaiting reasoning...';
+
+  const ev=document.getElementById('adEvidence'); ev.innerHTML='';
+  if (n.evidence&&n.evidence.length) n.evidence.forEach(e=>{ ev.innerHTML+=`<div class="ad-ev-item">${String(e).slice(0,400)}</div>`; });
+  else ev.innerHTML='<div class="ad-empty">No evidence recorded</div>';
+
+  // Search queries
+  const sr=document.getElementById('adSearches'), srs=document.getElementById('adSearchesSection');
+  sr.innerHTML='';
+  if (n.searches&&n.searches.length) { srs.style.display='block'; n.searches.forEach(s=>{ sr.innerHTML+=`<div class="ad-ev-item" style="font-size:7px;color:var(--text3)">${String(s).slice(0,200)}</div>`; }); }
+  else srs.style.display='none';
+
+  const cs=document.getElementById('adCites'), css=document.getElementById('adCitesSection');
+  cs.innerHTML='';
+  if (n.cites&&n.cites.length) { css.style.display='block'; n.cites.slice(0,10).forEach(c=>{ const cited=S.agents.get(c); const cName=cited?(cited.label||cited.name||c):c; cs.innerHTML+=`<span class="ad-cite-tag" onclick="selectNode('${c}')">↗ ${String(cName).slice(0,24)}</span>`; }); }
+  else css.style.display='none';
+
+  // Tool calls section
+  const tl=document.getElementById('adTools'), tls=document.getElementById('adToolSection');
+  tl.innerHTML='';
+  if (n.tool_calls&&n.tool_calls.length) {
+    tls.style.display='block';
+    n.tool_calls.forEach(tc=>{
+      const statusIcon = tc.success ? '✓' : '✗';
+      const statusColor = tc.success ? 'var(--green)' : 'var(--red)';
+      tl.innerHTML+=`<div class="ad-ev-item" style="font-size:7px">
+        <span style="color:${statusColor}">${statusIcon}</span>
+        <strong>${tc.tool_name}</strong>
+        ${tc.duration_ms?` <span style="color:var(--text3)">(${tc.duration_ms.toFixed(0)}ms)</span>`:''}
+        ${tc.error?`<div style="color:var(--red);margin-top:1px">${tc.error}</div>`:''}
+      </div>`;
+    });
+  } else tls.style.display='none';
+
+  const tags=document.getElementById('adTags'); tags.innerHTML='';
+  (n.risks||[]).slice(0,6).forEach(r=>{ tags.innerHTML+=`<span class="ad-tag" style="background:var(--red2);color:var(--red)">⚠ ${String(r).slice(0,120)}</span>`; });
+  (n.opps||[]).slice(0,6).forEach(o=>{ tags.innerHTML+=`<span class="ad-tag" style="background:var(--green2);color:var(--green)">+ ${String(o).slice(0,120)}</span>`; });
+  if (!(n.risks||[]).length&&!(n.opps||[]).length) tags.innerHTML='<div class="ad-empty">No risks or opportunities identified</div>';
+
+  // Restore chat
+  renderAgentChat(id);
+}
+function renderAgentChat(id) {
+  const n=S.agents.get(id);
+  const el=document.getElementById('adChatMsgs');
+  if (!n||!n._chatHistory||!n._chatHistory.length) { el.innerHTML='<div class="ad-chat-empty">Ask this agent about its research...</div>'; return; }
+  el.innerHTML = n._chatHistory.map(m => `<div class="ad-chat-msg ${m.role}"><div class="label">${m.role==='user'?'You':(n.label||'Agent')}</div>${m.content}</div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+// ===== AGENT CHAT =====
+async function sendAgentChat() {
+  const input = document.getElementById('adChatInput');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const n = S.agents.get(S.selectedId);
+  if (!n) return;
+  const btn = document.getElementById('adChatSend');
+
+  // Add user message
+  if (!n._chatHistory) n._chatHistory = [];
+  n._chatHistory.push({ role: 'user', content: msg });
+  input.value = '';
+  renderAgentChat(S.selectedId);
+
+  // Disable input
+  input.disabled = true; btn.disabled = true;
+
+  try {
+    const resp = await fetch('/api/agent/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message: msg,
+        agent_context: {
+          label: n.label,
+          hypothesis: n.hypothesis,
+          findings: n.findings,
+          reasoning: n.reasoning,
+          evidence: n.evidence,
+          score: n.score,
+          confidence: n.confidence,
+        },
+        history: n._chatHistory.slice(-10, -1), // exclude the just-added user msg
+      }),
+    });
+    const data = await resp.json();
+    if (data.response) {
+      n._chatHistory.push({ role: 'assistant', content: data.response });
+      renderAgentChat(S.selectedId);
+    } else if (data.error) {
+      n._chatHistory.push({ role: 'assistant', content: '[Error: ' + data.error + ']' });
+      renderAgentChat(S.selectedId);
+    }
+  } catch(e) {
+    n._chatHistory.push({ role: 'assistant', content: '[Connection error]' });
+    renderAgentChat(S.selectedId);
+  }
+
+  input.disabled = false; btn.disabled = false;
+  input.focus();
+}
+
+// ===== SSE =====
+let _sseConnected = false;
+function connectSSE() {
+  if (_sseConnected) return;
+  _sseConnected = true;
+  const es = new EventSource('/api/events');
+  es.onmessage = e => { try { const m=JSON.parse(e.data); S.eventBuffer.push(m); if (!S.eventTimer) S.eventTimer=setTimeout(processEventBuffer,16); } catch(_) {} };
+  es.onerror = () => { _sseConnected=false; es.close(); setTimeout(connectSSE,2000); };
+}
+function processEventBuffer() {
+  S.eventTimer=null; const batch=S.eventBuffer; S.eventBuffer=[];
+  for (const msg of batch) {
+    switch(msg.type) {
+      case 'status': updateStatus(msg.data); break;
+      case 'agent_spawned': addNode(msg.data); break;
+      case 'agent_update': updateNode(msg.data); break;
+      case 'agent_complete': completeNode(msg.data); break;
+      case 'graph_edges': receiveEdges(msg.data); break;
+      case 'swarm_init': if (msg.data.domains) addConsole({type:'domains',data:{message:msg.data.domains.join(', ')}}); break;
+      case 'debate_done': showDebate(msg.data.result); break;
+      case 'simulation_done': showSims(msg.data); break;
+      case 'verdict_ready': showVerdict(msg.data); break;
+      case 'tool_call': handleToolCall(msg.data); break;
+      case 'tool_result': handleToolResult(msg.data); break;
+      case 'complete': finish(); break;
+    }
+    addConsole(msg);
+  }
+  if (batch.length>0) { reheatSimulation(0.2); scheduleSave(); }
+}
+
+// ===== UI =====
+function updateStatus(d) { document.getElementById('statusBar').classList.add('visible'); document.getElementById('statusText').textContent=d.message||''; if (d.pct) document.getElementById('progFill').style.width=d.pct+'%'; }
+function renderSidebar() {
+  const list=document.getElementById('agentList'); const agents=[...S.agents.values()];
+  if (!agents.length) { list.innerHTML='<div style="padding:18px 10px;text-align:center;color:var(--text3);font-size:10px">No agents spawned</div>'; return; }
+  agents.sort((a,b)=>(a.depth||0)-(b.depth||0)||(a.label||'').localeCompare(b.label||''));
+  let html='';
+  for (const a of agents) {
+    const s=a.status, sc=s==='complete'?'st-done':(s==='spawned'||s==='researching'?'st-running':'st-spawned');
+    const p=(s==='spawned'||s==='researching')?'pulse':'', act=a.id===S.selectedId?'active':'';
+    const ind=a.depth?'  '.repeat(a.depth):'';
+    html+=`<div class="ag-item ${act}" onclick="selectNode('${a.id}')"><span class="ag-dot ${p}" style="background:${getNodeColor(a)}"></span><span class="ag-name">${ind}${a.label||a.id.slice(0,6)}</span><span class="ag-status ${sc}">${s==='complete'?'done':(s==='researching'?'run':s)}</span></div>`;
+  }
+  list.innerHTML=html;
+}
+function updateUI() { renderSidebar(); document.getElementById('agentCount').textContent=S.nodes.length; document.getElementById('statRunning').textContent=S.running; document.getElementById('statDone').textContent=S.done; document.getElementById('statSpawned').textContent=S.total; document.getElementById('statTokens').textContent=S.tokens; document.getElementById('tokenCount').textContent=S.tokens; }
+function renderHistory() {
+  const list=document.getElementById('historyList');
+  list.innerHTML=S.history.slice(-50).reverse().map(h=>`<div class="history-item" onclick="selectNode('${h.id}')"><span class="history-agent" style="opacity:${Math.max(0.3,1-(h.depth||0)*0.15)}">${h.agent}</span><span class="history-text">${h.text}</span></div>`).join('');
+  document.getElementById('historySection').classList.add('visible');
+}
+function addConsole(msg) { const ts=new Date().toLocaleTimeString(), txt=msg.type+(msg.data?' '+(msg.data.message||msg.data.label||msg.data.id||''):''); S.console.push({ts,type:msg.type,text:txt}); const el=document.getElementById('consoleView'); if (el.classList.contains('active')) { el.innerHTML+=`<div class="console-line"><span class="console-time">${ts}</span><span>${txt.slice(0,120)}</span></div>`; el.scrollTop=el.scrollHeight; } }
+function renderDebateUI(r) {
+  S.debateData=r; const log=document.getElementById('debateLog'); log.innerHTML='';
+  (r.agreed_facts||[]).slice(0,8).forEach(f=>{log.innerHTML+=`<div class="debate-entry" style="border-left-color:var(--green)"><div class="de-name">✓ Consensus</div><div class="de-text">${f}</div></div>`;});
+  (r.disagreements||[]).slice(0,5).forEach(d=>{log.innerHTML+=`<div class="debate-entry" style="border-left-color:var(--red)"><div class="de-name">✗ Disagreement</div><div class="de-text">${d}</div></div>`;});
+  if (r.final_confidence) log.innerHTML+=`<div class="debate-entry" style="border-left-color:var(--accent);margin-top:3px"><div class="de-name">★ Confidence</div><div class="de-text">${(r.final_confidence*100).toFixed(0)}%</div></div>`;
+}
+function renderSimUI(d) {
+  const s=d.scenarios||[]; document.querySelector('[data-tab="sim"]').classList.add('active');
+  const prob=document.getElementById('probArea');
+  if (s.length>=2) { const opt=s.find(x=>x.scenario==='optimistic')||s[0], cat=s.find(x=>x.scenario==='catastrophic')||s[s.length-1], real=s.find(x=>x.scenario==='realistic')||s[1]||{}; prob.innerHTML=`<div class="prob-row"><span class="prob-label">Success</span><div class="prob-track"><div class="prob-fill" style="width:${(opt.probability*100).toFixed(0)}%;background:var(--green)"></div></div><span class="prob-val">${(opt.probability*100).toFixed(0)}%</span></div><div class="prob-row"><span class="prob-label">Realistic</span><div class="prob-track"><div class="prob-fill" style="width:${(real.probability*100).toFixed(0)}%;background:var(--blue)"></div></div><span class="prob-val">${(real.probability*100).toFixed(0)}%</span></div><div class="prob-row"><span class="prob-label">Failure</span><div class="prob-track"><div class="prob-fill" style="width:${(cat.probability*100).toFixed(0)}%;background:var(--red)"></div></div><span class="prob-val">${(cat.probability*100).toFixed(0)}%</span></div>`; }
+  const v=document.getElementById('simView'); v.classList.add('active');
+  v.innerHTML=s.map(sc=>{const cls=sc.scenario==='optimistic'?'sc-opt':sc.scenario==='catastrophic'?'sc-doom':'sc-real'; return `<div class="sim-card"><div class="sc-header"><span class="sc-name">${sc.scenario}</span><span class="sc-prob ${cls}">${(sc.probability*100).toFixed(0)}%</span></div><div class="sc-desc">${(sc.key_events||[]).join(' → ')||sc.timeline||''}</div>${sc.success_probability?`<div style="font-size:8px;color:var(--text3);margin-top:3px">Success: ${(sc.success_probability*100).toFixed(0)}% &nbsp; Failure: ${(sc.failure_probability*100).toFixed(0)}%</div>`:''}</div>`;}).join('');
+}
+function renderVerdictUI(v) {
+  document.getElementById('verdictSection').style.display='block';
+  const p=(v.overall_success_probability*100||0).toFixed(0);
+  const decision=v.decision||'';
+  const decisionColors={'GO':'#00b894','NO-GO':'#e17055','CONDITIONAL-GO':'#fdcb6e'};
+  const decisionBadge=decision?`<span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;color:#fff;background:${decisionColors[decision]||'#636e72'};margin-left:6px">${decision}</span>`:'';
+
+  // Header: probability + decision
+  let h=`<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px"><div class="v-prob">${p}%</div>${decisionBadge}</div>`;
+
+  // Confidence level
+  const confLabel=v.confidence_level||'MEDIUM';
+  const confColors={'HIGH':'#00b894','MEDIUM':'#fdcb6e','LOW':'#e17055'};
+  h+=`<div style="font-size:8px;color:${confColors[confLabel]||'var(--text3)'};margin-bottom:6px">Confidence: ${confLabel} | Model: ${v.model_used||'unknown'}</div>`;
+
+  // Decision rationale
+  if (v.decision_rationale) h+=`<div class="v-text" style="margin-bottom:8px;padding:6px 8px;background:rgba(108,92,231,.06);border-radius:4px;border-left:2px solid var(--accent)">${v.decision_rationale}</div>`;
+
+  // Probability breakdown visual
+  const pb=v.probability_breakdown;
+  if (pb) {
+    h+=`<div style="margin:8px 0;font-size:8px"><strong>Probability Distribution:</strong></div>`;
+    const labels={optimistic:'Best Case',realistic:'Expected',pessimistic:'Worst Case'};
+    const barColors={optimistic:'#00b894',realistic:'#74b9ff',pessimistic:'#e17055'};
+    for (const [k,lbl] of Object.entries(labels)) {
+      const val=pb[k]||0;
+      h+=`<div style="display:flex;align-items:center;gap:6px;margin:2px 0;font-size:8px"><span style="width:60px;color:var(--text2)">${lbl}:</span><div style="flex:1;height:8px;background:var(--surface);border-radius:4px;overflow:hidden"><div style="width:${(val*100).toFixed(0)}%;height:100%;background:${barColors[k]};border-radius:4px"></div></div><span style="width:32px;text-align:right;font-weight:600">${(val*100).toFixed(0)}%</span></div>`;
+    }
+  }
+
+  // Summary
+  if (v.summary) h+=`<div class="v-text" style="margin-top:8px"><strong>Summary:</strong> ${v.summary}</div>`;
+
+  // Recommended path
+  if (v.recommended_path) h+=`<div class="v-text" style="margin-top:6px"><strong>Action Plan:</strong> ${v.recommended_path}</div>`;
+
+  // Milestones
+  if (v.key_milestones&&v.key_milestones.length) {
+    h+=`<div class="v-insight"><strong>Key Milestones:</strong>`;
+    if (typeof v.key_milestones[0]==='object') {
+      h+=`<table style="width:100%;margin-top:4px;font-size:7px;border-collapse:collapse">`;
+      v.key_milestones.slice(0,5).forEach(m=>{
+        h+=`<tr><td style="padding:2px 4px;background:var(--surface);border-bottom:1px solid var(--border)">${m.week||'?'}</td><td style="padding:2px 4px;border-bottom:1px solid var(--border)">${m.action||m}</td><td style="padding:2px 4px;color:var(--text3)">${m.success_criteria||''}</td></tr>`;
+      });
+      h+=`</table>`;
+    } else {
+      h+=`<ol style="padding-left:12px;margin-top:1px">`;
+      v.key_milestones.slice(0,5).forEach(m=>{h+=`<li>${m}</li>`;});
+      h+=`</ol>`;
+    }
+    h+=`</div>`;
+  }
+
+  // Risk matrix with mitigation
+  if (v.top_risks&&v.top_risks.length) {
+    h+=`<div style="margin-top:6px;font-size:8px"><strong style="color:var(--red)">Risk Matrix:</strong><table style="width:100%;margin-top:2px;font-size:7px;border-collapse:collapse">`;
+    const mitigation=v.risk_mitigation||{};
+    v.top_risks.slice(0,5).forEach((r,i)=>{
+      const mit=mitigation[r]||mitigation[String(i)]||'-';
+      h+=`<tr><td style="padding:2px 4px;background:var(--surface);border-bottom:1px solid var(--border);color:var(--red)">${String(r).slice(0,150)}</td><td style="padding:2px 4px;border-bottom:1px solid var(--border);color:var(--text3)">${String(mit).slice(0,150)}</td></tr>`;
+    });
+    h+=`</table></div>`;
+  }
+
+  // Critical assumptions
+  if (v.critical_assumptions&&v.critical_assumptions.length) {
+    h+=`<div class="v-insight"><strong>Critical Assumptions:</strong><ul style="padding-left:12px;margin-top:1px">`;
+    v.critical_assumptions.forEach(a=>{h+=`<li>${a}</li>`;});
+    h+=`</ul></div>`;
+  }
+
+  // Tipping point
+  if (v.what_would_change_the_answer) {
+    h+=`<div class="v-insight" style="padding:6px 8px;background:rgba(253,203,110,.06);border-radius:4px;border:1px solid rgba(253,203,110,.15)"><strong>Tipping Point:</strong> ${v.what_would_change_the_answer}</div>`;
+  }
+
+  // Key insights
+  if (v.key_insights&&v.key_insights.length) {
+    h+=`<div class="v-insight"><strong>Key Insights:</strong><ul style="padding-left:12px;margin-top:1px">`;
+    v.key_insights.slice(0,5).forEach(i=>{h+=`<li>${i}</li>`;});
+    h+=`</ul></div>`;
+  }
+
+  // Predicted developments timeline
+  if (v.predicted_developments&&v.predicted_developments.length) {
+    h+=`<div class="v-insight"><strong>Predicted Developments:</strong>`;
+    h+=`<div style="margin-top:4px">`;
+    v.predicted_developments.forEach((d,i)=>{
+      const probColor=(d.probability||0)>=0.7?'var(--green)':((d.probability||0)>=0.4?'var(--amber)':'var(--red)');
+      h+=`<div style="display:flex;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);font-size:8px">
+        <span style="color:var(--text3);min-width:60px;font-weight:600">${d.timeframe||'?'}</span>
+        <span style="flex:1;color:var(--text)">${d.event||''}</span>
+        <span style="color:${probColor};font-weight:600;min-width:32px;text-align:right">${((d.probability||0)*100).toFixed(0)}%</span>
+      </div>`;
+      if (d.evidence) h+=`<div style="font-size:7px;color:var(--text3);padding:2px 0 2px 66px">Evidence: ${d.evidence}</div>`;
+      if (d.signals_to_watch) h+=`<div style="font-size:7px;color:var(--accent);padding:0 0 4px 66px">Watch: ${d.signals_to_watch}</div>`;
+    });
+    h+=`</div></div>`;
+  }
+
+  // Key actors
+  if (v.key_actors&&v.key_actors.length) {
+    h+=`<div class="v-insight"><strong>Key Actors:</strong><table style="width:100%;margin-top:3px;font-size:7px;border-collapse:collapse">`;
+    v.key_actors.forEach(a=>{
+      const infColor=(a.influence||0)>=0.7?'var(--red)':((a.influence||0)>=0.4?'var(--amber)':'var(--text3)');
+      const stanceIcon=a.stance==='enabler'?'↑':(a.stance==='blocker'?'↓':'→');
+      const stanceColor=a.stance==='enabler'?'var(--green)':(a.stance==='blocker'?'var(--red)':'var(--text3)');
+      h+=`<tr><td style="padding:3px 4px;border-bottom:1px solid var(--border);font-weight:600">${a.name||''}</td><td style="padding:3px 4px;border-bottom:1px solid var(--border);color:var(--text3)">${a.type||''}</td><td style="padding:3px 4px;border-bottom:1px solid var(--border);color:${infColor};text-align:center">${((a.influence||0)*100).toFixed(0)}%</td><td style="padding:3px 4px;border-bottom:1px solid var(--border);color:${stanceColor}">${stanceIcon} ${a.stance||''}</td></tr>`;
+    });
+    h+=`</table></div>`;
+  }
+
+  // Narrative forecast
+  if (v.narrative_forecast) {
+    h+=`<div class="v-insight"><strong>Narrative Forecast:</strong><div style="font-size:9px;color:var(--text2);line-height:1.7;margin-top:4px;padding:8px 10px;background:var(--surface2);border-radius:5px;white-space:pre-wrap">${v.narrative_forecast}</div></div>`;
+  }
+
+  // Evidence lines
+  if (v.evidence_lines&&v.evidence_lines.length) {
+    h+=`<div class="v-insight"><strong>Evidence Lines:</strong>`;
+    v.evidence_lines.slice(0,6).forEach(el=>{
+      const vColor=el.verdict==='supported'?'var(--green)':(el.verdict==='contested'?'var(--red)':'var(--amber)');
+      h+=`<div style="margin:4px 0;padding:5px 8px;background:var(--surface2);border-radius:4px;border-left:3px solid ${vColor}">
+        <div style="font-size:8px;font-weight:600;margin-bottom:2px">${el.claim||''}</div>`;
+      if (el.evidence_for&&el.evidence_for.length) h+=`<div style="font-size:7px;color:var(--green)">+ ${el.evidence_for.join('; ')}</div>`;
+      if (el.evidence_against&&el.evidence_against.length) h+=`<div style="font-size:7px;color:var(--red)">- ${el.evidence_against.join('; ')}</div>`;
+      h+=`<div style="font-size:7px;font-weight:600;margin-top:2px;color:${vColor}">Verdict: ${el.verdict||'?'}</div></div>`;
+    });
+    h+=`</div>`;
+  }
+
+  // Supporting agents
+  const agents=[...S.agents.values()].filter(a=>a.status==='complete'&&a.findings);
+  if (agents.length) {
+    h+=`<div class="v-insight"><strong>Supporting Agents (${agents.length}):</strong><ul style="padding-left:12px;margin-top:1px">`;
+    agents.slice(0,8).forEach(a=>{const f=(a.findings||'').slice(0,80); h+=`<li style="cursor:pointer;color:var(--accent);padding:1px 0" onclick="selectNode('${a.id}')">${a.label}: ${f}${f.length>=80?'...':''}</li>`;});
+    if (agents.length>8) h+=`<li style="color:var(--text3)">... and ${agents.length-8} more</li>`;
+    h+=`</ul></div>`;
+  }
+
+  document.getElementById('verdictContent').innerHTML=h;
+}
+function showDebate(r) { renderDebateUI(r); const id='debate_node'; if (!S.agents.has(id)) { addNode({id,label:'Debate',depth:0,_type:'debate',color:'#f0a500',status:'complete',hypothesis:`Consensus confidence: ${((r.final_confidence||0)*100).toFixed(0)}% — ${(r.agreed_facts||[]).length} agreed, ${(r.disagreements||[]).length} disputed`}); for (const n of S.nodes) if (getNodeType(n)==='root'||getNodeType(n)==='agent') addEdge(n.id,id,'debate'); } }
+function showSims(d) { S.simData=d; renderSimUI(d); const s=d.scenarios||[]; for (const sc of s) { const id='sim_'+(sc.scenario||'scenario'); if (!S.agents.has(id)) { addNode({id,label:sc.scenario,depth:0,_type:'sim',color:sc.scenario==='optimistic'?'#00b894':(sc.scenario==='catastrophic'?'#e17055':'#74b9ff'),status:'complete',hypothesis:`${sc.scenario} scenario — ${(sc.probability*100).toFixed(0)}% probability`}); for (const n of S.nodes) if (getNodeType(n)==='root'||getNodeType(n)==='agent') addEdge(n.id,id,'sim'); } } }
+function showVerdict(d) { const v=d.verdict||{}; S.verdictData=v; renderVerdictUI(v); renderVerdictFullPage(v); const id='verdict_final'; if (!S.agents.has(id)) { addNode({id,label:'Verdict',depth:0,_type:'verdict',color:'#6c5ce7',status:'complete',hypothesis:`Final verdict: ${(v.overall_success_probability*100||0).toFixed(0)}% success probability`}); for (const n of S.nodes) { const t=getNodeType(n); if (t==='sim'||t==='root') addEdge(n.id,id,'parent'); } } }
+function renderVerdictFullPage(v) {
+  const el=document.getElementById('verdictView');
+  if (!v||!Object.keys(v).length) { el.innerHTML='<div style="text-align:center;color:var(--text3);font-size:10px;padding:40px 0">Verdict will appear when simulation completes</div>'; return; }
+  const p=(v.overall_success_probability*100||0).toFixed(0);
+  const decision=v.decision||'';
+  const decisionColors={'GO':'#00b894','NO-GO':'#e17055','CONDITIONAL-GO':'#fdcb6e'};
+  let h=`<div style="max-width:800px;margin:0 auto">`;
+  // Header
+  h+=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div style="font-size:48px;font-weight:700;color:var(--accent)">${p}%</div><div><span style="display:inline-block;padding:4px 14px;border-radius:6px;font-size:14px;font-weight:700;color:#fff;background:${decisionColors[decision]||'#636e72'}">${decision||'N/A'}</span><div style="font-size:10px;color:var(--text3);margin-top:4px">Confidence: ${v.confidence_level||'MEDIUM'}</div></div></div>`;
+  // Rationale
+  if (v.decision_rationale) h+=`<div style="padding:12px 16px;background:rgba(108,92,231,.06);border-radius:8px;border-left:3px solid var(--accent);margin-bottom:16px;font-size:11px;color:var(--text);line-height:1.6">${v.decision_rationale}</div>`;
+  // Summary
+  if (v.summary) h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Executive Summary</h3><div style="font-size:11px;color:var(--text2);line-height:1.7">${v.summary}</div></div>`;
+  // Probability breakdown
+  const pb=v.probability_breakdown;
+  if (pb) {
+    h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Probability Distribution</h3>`;
+    const labels={optimistic:'Best Case',realistic:'Expected',pessimistic:'Worst Case'};
+    const barColors={optimistic:'#00b894',realistic:'#74b9ff',pessimistic:'#e17055'};
+    for (const [k,lbl] of Object.entries(labels)) {
+      const val=pb[k]||0;
+      h+=`<div style="display:flex;align-items:center;gap:10px;margin:4px 0;font-size:10px"><span style="width:80px;color:var(--text2)">${lbl}:</span><div style="flex:1;height:14px;background:var(--surface3);border-radius:7px;overflow:hidden"><div style="width:${(val*100).toFixed(0)}%;height:100%;background:${barColors[k]};border-radius:7px;transition:width .4s"></div></div><span style="width:36px;text-align:right;font-weight:600">${(val*100).toFixed(0)}%</span></div>`;
+    }
+    h+=`</div>`;
+  }
+  // Action plan
+  if (v.recommended_path) h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Action Plan</h3><div style="font-size:11px;color:var(--text2);line-height:1.7;padding:12px 16px;background:var(--surface2);border-radius:8px">${v.recommended_path}</div></div>`;
+  // Risk matrix
+  if (v.top_risks&&v.top_risks.length) {
+    const mitigation=v.risk_mitigation||{};
+    h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Risk Matrix</h3><table style="width:100%;font-size:9px;border-collapse:collapse">`;
+    h+=`<tr style="background:var(--surface2)"><th style="padding:6px 8px;text-align:left;color:var(--red)">Risk</th><th style="padding:6px 8px;text-align:left;color:var(--text2)">Mitigation</th></tr>`;
+    v.top_risks.forEach((r,i)=>{const mit=mitigation[r]||mitigation[String(i)]||'-'; h+=`<tr><td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text)">${String(r).slice(0,200)}</td><td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text3)">${String(mit).slice(0,200)}</td></tr>`;});
+    h+=`</table></div>`;
+  }
+  // Narrative forecast
+  if (v.narrative_forecast) h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Intelligence Forecast</h3><div style="font-size:10px;color:var(--text2);line-height:1.8;padding:16px;background:var(--surface2);border-radius:8px;white-space:pre-wrap">${v.narrative_forecast}</div></div>`;
+  // Predicted developments
+  if (v.predicted_developments&&v.predicted_developments.length) {
+    h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Predicted Developments</h3>`;
+    v.predicted_developments.forEach(d=>{
+      const probColor=(d.probability||0)>=0.7?'var(--green)':((d.probability||0)>=0.4?'var(--amber)':'var(--red)');
+      h+=`<div style="padding:8px 12px;margin-bottom:4px;background:var(--surface2);border-radius:6px;border-left:3px solid ${probColor}"><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:9px;color:var(--text3);font-weight:600">${d.timeframe||'?'}</span><span style="font-size:10px;font-weight:600;color:${probColor}">${((d.probability||0)*100).toFixed(0)}%</span></div><div style="font-size:10px;color:var(--text);margin-top:2px">${d.event||''}</div>${d.evidence?`<div style="font-size:8px;color:var(--text3);margin-top:3px">Evidence: ${d.evidence}</div>`:''}${d.signals_to_watch?`<div style="font-size:8px;color:var(--accent);margin-top:2px">Watch: ${d.signals_to_watch}</div>`:''}</div>`;
+    });
+    h+=`</div>`;
+  }
+  // Key actors
+  if (v.key_actors&&v.key_actors.length) {
+    h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Key Actors</h3><table style="width:100%;font-size:9px;border-collapse:collapse">`;
+    h+=`<tr style="background:var(--surface2)"><th style="padding:6px 8px;text-align:left">Actor</th><th style="padding:6px 8px;text-align:left">Type</th><th style="padding:6px 8px;text-align:center">Influence</th><th style="padding:6px 8px;text-align:center">Stance</th><th style="padding:6px 8px;text-align:left">Role</th></tr>`;
+    v.key_actors.forEach(a=>{const infColor=(a.influence||0)>=0.7?'var(--red)':((a.influence||0)>=0.4?'var(--amber)':'var(--text3)');const stanceColor=a.stance==='enabler'?'var(--green)':(a.stance==='blocker'?'var(--red)':'var(--text3)');h+=`<tr><td style="padding:5px 8px;border-bottom:1px solid var(--border);font-weight:600">${a.name||''}</td><td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text3)">${a.type||''}</td><td style="padding:5px 8px;border-bottom:1px solid var(--border);text-align:center;color:${infColor};font-weight:600">${((a.influence||0)*100).toFixed(0)}%</td><td style="padding:5px 8px;border-bottom:1px solid var(--border);text-align:center;color:${stanceColor}">${a.stance||''}</td><td style="padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text2)">${(a.summary||'').slice(0,120)}</td></tr>`;});
+    h+=`</table></div>`;
+  }
+  // Evidence lines
+  if (v.evidence_lines&&v.evidence_lines.length) {
+    h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Evidence Assessment</h3>`;
+    v.evidence_lines.forEach(el=>{const vColor=el.verdict==='supported'?'var(--green)':(el.verdict==='contested'?'var(--red)':'var(--amber)');h+=`<div style="margin:6px 0;padding:10px 14px;background:var(--surface2);border-radius:6px;border-left:3px solid ${vColor}"><div style="font-size:10px;font-weight:600;margin-bottom:4px">${el.claim||''}</div>${el.evidence_for&&el.evidence_for.length?`<div style="font-size:8px;color:var(--green)">+ ${el.evidence_for.join('; ')}</div>`:''}${el.evidence_against&&el.evidence_against.length?`<div style="font-size:8px;color:var(--red)">- ${el.evidence_against.join('; ')}</div>`:''}<div style="font-size:8px;font-weight:600;margin-top:4px;color:${vColor}">Verdict: ${el.verdict||'?'}</div></div>`;});
+    h+=`</div>`;
+  }
+  // Key insights
+  if (v.key_insights&&v.key_insights.length) {
+    h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Key Insights</h3>`;
+    v.key_insights.forEach((i,n)=>{h+=`<div style="padding:6px 12px;margin-bottom:3px;font-size:10px;color:var(--text2);line-height:1.5">${n+1}. ${i}</div>`;});
+    h+=`</div>`;
+  }
+  // Critical assumptions
+  if (v.critical_assumptions&&v.critical_assumptions.length) {
+    h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Critical Assumptions</h3>`;
+    v.critical_assumptions.forEach(a=>{h+=`<div style="padding:4px 12px;font-size:9px;color:var(--text2)">• ${a}</div>`;});
+    h+=`</div>`;
+  }
+  // Tipping point
+  if (v.what_would_change_the_answer) h+=`<div style="padding:10px 16px;background:rgba(253,203,110,.08);border-radius:8px;border:1px solid rgba(253,203,110,.2);margin-bottom:16px"><strong style="font-size:10px">Tipping Point:</strong><div style="font-size:10px;color:var(--text2);margin-top:3px">${v.what_would_change_the_answer}</div></div>`;
+  // Supporting agents - show ALL agents with full findings
+  const agents=[...S.agents.values()].filter(a=>a.status==='complete'&&a.findings);
+  if (agents.length) {
+    h+=`<div style="margin-bottom:16px"><h3 style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Agent Research Summary (${agents.length} agents)</h3>`;
+    h+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">`;
+    agents.forEach(a=>{
+      const color=getNodeColor(a); const f=(a.findings||'').slice(0,200);
+      h+=`<div style="padding:8px 10px;background:var(--surface2);border-radius:6px;border-left:3px solid ${color};cursor:pointer;transition:all .1s" onclick="selectNode('${a.id}')">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></span>
+          <span style="font-size:9px;font-weight:600;color:var(--text)">${a.label||a.id}</span>
+          <span style="font-size:7px;color:var(--text3);margin-left:auto">s:${(a.score||0).toFixed(2)} c:${(a.confidence||0).toFixed(2)}</span>
+        </div>
+        <div style="font-size:8px;color:var(--text2);line-height:1.5">${f}${(a.findings||'').length>200?'...':''}</div>
+        ${(a.risks||[]).length?`<div style="margin-top:3px;display:flex;flex-wrap:wrap;gap:2px">${a.risks.slice(0,2).map(r=>`<span style="font-size:6px;padding:1px 4px;border-radius:3px;background:var(--red2);color:var(--red)">${String(r).slice(0,60)}</span>`).join('')}</div>`:''}
+      </div>`;
+    });
+    h+=`</div></div>`;
+  }
+  h+=`</div>`;
+  el.innerHTML=h;
+}
+
+// ===== TOOL EVENT HANDLERS =====
+function handleToolCall(d) {
+  const agent = S.agents.get(d.agent_id);
+  if (agent) {
+    agent.status = 'researching';
+    agent._toolCall = d.tool_name;
+    updateUI();
+  }
+  addConsole({type:'tool', data:{message:`${d.agent_name||'Agent'} → ${d.tool_name}(${JSON.stringify(d.args||{}).slice(0,80)})`}});
+}
+function handleToolResult(d) {
+  const agent = S.agents.get(d.agent_id);
+  if (agent) {
+    if (!agent.tool_calls) agent.tool_calls = [];
+    agent.tool_calls.push({
+      tool_name: d.tool_name,
+      success: d.success,
+      duration_ms: d.duration_ms,
+      error: d.error,
+    });
+    if (S.selectedId === d.agent_id) updateAgentDetailPanel(d.agent_id);
+  }
+  addConsole({type:'tool_result', data:{message:`${d.agent_name||'Agent'} ← ${d.tool_name}: ${d.success?'OK':'FAIL'}${d.duration_ms?` (${d.duration_ms.toFixed(0)}ms)`:''}${d.error?': '+d.error:''}`}});
+}
+
+// ===== RUN =====
+function startRun() {
+  const goal=document.getElementById('goalInput').value.trim(); if (!goal) return;
+  const constraints=document.getElementById('constraintsInput').value.trim(), timeline=document.getElementById('timelineInput').value.trim();
+  saveCurrentChat();
+  _colorIdx=0; for (const k in _rootColorMap) delete _rootColorMap[k];
+  clearState();
+  S.currentChatId='chat_'+Date.now()+'_'+Math.random().toString(36).slice(2,6); S.runActive=true;
+  document.getElementById('inputOverlay').classList.add('hidden');
+  document.getElementById('goalDisplay').textContent=goal;
+  document.getElementById('statusBadge').className='badge badge-run'; document.getElementById('statusBadge').textContent='Running';
+  document.getElementById('thinkBadge').style.display='flex';
+  document.getElementById('statusBar').classList.add('visible');
+  document.getElementById('agentDetail').classList.remove('show');
+  document.getElementById('consoleView').innerHTML='';
+  document.getElementById('debateLog').innerHTML='<div style="font-size:9px;color:var(--text3);padding:10px 0">Debate in progress...</div>';
+  document.getElementById('probArea').innerHTML='<div style="font-size:9px;color:var(--text3);text-align:center;padding:12px 0">Running simulation...</div>';
+  document.getElementById('verdictSection').style.display='none';
+  document.getElementById('simView').innerHTML='<div style="text-align:center;color:var(--text3);font-size:10px;padding:40px 0">Waiting...</div>';
+  document.getElementById('verdictView').innerHTML='<div style="text-align:center;color:var(--text3);font-size:10px;padding:40px 0">Verdict will appear when simulation completes</div>';
+  document.getElementById('historySection').classList.remove('visible');
+  document.getElementById('graphLegend').classList.add('visible');
+  document.getElementById('searchInput').value=''; S.searchQuery=''; document.getElementById('searchNoResult').textContent='';
+  updateUI(); renderChatList();
+  S.timerHandle=setInterval(()=>{S.timer++; const m=String(Math.floor(S.timer/60)).padStart(2,'0'), s=String(S.timer%60).padStart(2,'0'); document.getElementById('timer').textContent=m+':'+s;},1000);
+  updateChatIndex();
+  const model=document.getElementById('modelSelect').value||null;
+  const enabledTools={}; S.availableTools.forEach(t=>{enabledTools[t.name]=t._enabled!==false;});
+  fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({goal,constraints,timeline,model,enabled_tools:enabledTools})}).catch(console.error);
+}
+function finish() {
+  S.runActive=false; clearInterval(S.timerHandle);
+  document.getElementById('statusBadge').className='badge badge-idle'; document.getElementById('statusBadge').textContent='Complete';
+  document.getElementById('thinkBadge').style.display='none';
+  updateStatus({message:'Simulation complete',pct:100});
+  updateUI(); updateChatIndex(); scheduleSave();
+  // Ensure all agents stay clickable after run completes
+  document.getElementById('agentList').style.pointerEvents='auto';
+  document.getElementById('graphContainer').style.pointerEvents='auto';
+}
+function scheduleSave() { if (!S._savePending) { S._savePending=true; requestAnimationFrame(()=>{S._savePending=false; saveCurrentChat();}); } }
+
+// ===== TOOL MANAGER =====
+async function loadToolConfig() {
+  try {
+    const resp = await fetch('/api/tools');
+    const tools = await resp.json();
+    S.availableTools = tools.map(t=>({...t,_enabled:true}));
+    renderToolChips();
+    renderToolManagerList();
+  } catch(e) { /* non-critical */ }
+}
+function renderToolChips() {
+  const list = document.getElementById('toolToggleList');
+  if (!S.availableTools||!S.availableTools.length) { list.innerHTML='<span style="font-size:7px;color:var(--text3)">Default tools active</span>'; return; }
+  list.innerHTML = S.availableTools.map(t => {
+    const on = t._enabled !== false;
+    const badge = t.type==='python'?'PY':(t.type==='http'?'HTTP':(t.type==='mcp'?'MCP':(t.type==='cli'?'CLI':t.type)));
+    const badgeColor = t.type==='python'?'var(--accent)':(t.type==='http'?'var(--blue)':(t.type==='mcp'?'var(--green)':'var(--amber)'));
+    return `<div class="tool-chip ${on?'':'off'}" onclick="toggleToolChip('${t.name}')" title="${t.description||''}">
+      <span class="chip-dot" style="background:${on?badgeColor:'var(--text3)'}"></span>
+      <span>${t.name}</span>
+      <span style="font-size:6px;color:${badgeColor};font-weight:600">${badge}</span>
+    </div>`;
+  }).join('');
+}
+function toggleToolChip(name) {
+  const t = S.availableTools.find(x=>x.name===name);
+  if (t) { t._enabled = t._enabled===false; renderToolChips(); renderToolManagerList(); }
+}
+function renderToolManagerList() {
+  const list = document.getElementById('toolManagerList');
+  if (!S.availableTools||!S.availableTools.length) { list.innerHTML='<div style="font-size:9px;color:var(--text3);padding:8px">Loading tools from server...</div>'; return; }
+  list.innerHTML = S.availableTools.map(t => {
+    const on = t._enabled !== false;
+    return `<div class="tm-list-entry">
+      <span class="tm-toggle ${on?'':'off'}" onclick="toggleToolChip('${t.name}')"><span class="knob"></span></span>
+      <span style="flex:1;font-weight:500">${t.name}</span>
+      <span style="font-size:7px;color:var(--text3)">${t.type}</span>
+      <span style="font-size:7px;color:var(--text3);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(t.description||'').slice(0,60)}</span>
+    </div>`;
+  }).join('');
+}
+function toggleToolManager() {
+  document.getElementById('toolManager').classList.toggle('hidden');
+  if (!document.getElementById('toolManager').classList.contains('hidden')) renderToolManagerList();
+}
+function closeToolManager() { document.getElementById('toolManager').classList.add('hidden'); }
+function showToolForm(type) {
+  const f = document.getElementById('customToolForm');
+  if (!type) { f.innerHTML=''; return; }
+  if (type==='http') {
+    f.innerHTML=`<input placeholder="Tool name" id="ctName" style="width:100%;font-size:9px;padding:5px;margin:3px 0;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"><input placeholder="Base URL (e.g. https://api.example.com)" id="ctUrl" style="width:100%;font-size:9px;padding:5px;margin:3px 0;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"><select id="ctMethod" style="width:100%;font-size:9px;padding:5px;margin:3px 0;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"><option>GET</option><option>POST</option></select><input placeholder="Path (e.g. /data?q={query})" id="ctPath" style="width:100%;font-size:9px;padding:5px;margin:3px 0;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"><button class="run-btn" style="font-size:10px;padding:6px 16px;margin-top:4px" onclick="addCustomTool()">+ Add HTTP Tool</button>`;
+  } else if (type==='cli') {
+    f.innerHTML=`<input placeholder="Tool name" id="ctName" style="width:100%;font-size:9px;padding:5px;margin:3px 0;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"><input placeholder="Command (e.g. curl -s {url})" id="ctCmd" style="width:100%;font-size:9px;padding:5px;margin:3px 0;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"><button class="run-btn" style="font-size:10px;padding:6px 16px;margin-top:4px" onclick="addCustomTool()">+ Add CLI Tool</button>`;
+  } else if (type==='mcp') {
+    f.innerHTML=`<input placeholder="Tool name" id="ctName" style="width:100%;font-size:9px;padding:5px;margin:3px 0;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"><input placeholder="Command (e.g. npx -y @mcp/server)" id="ctCmd" style="width:100%;font-size:9px;padding:5px;margin:3px 0;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text)"><button class="run-btn" style="font-size:10px;padding:6px 16px;margin-top:4px" onclick="addCustomTool()">+ Add MCP Tool</button>`;
+  }
+}
+async function addCustomTool() {
+  const type = document.getElementById('newToolType').value;
+  const name = document.getElementById('ctName').value.trim();
+  if (!name||!type) return;
+  let cfg = {type,name};
+  if (type==='http') {
+    cfg.base_url = document.getElementById('ctUrl').value.trim();
+    cfg.method = document.getElementById('ctMethod').value;
+    cfg.path = document.getElementById('ctPath').value.trim();
+    cfg.description = `HTTP ${cfg.method} ${cfg.base_url}${cfg.path}`;
+  } else if (type==='cli'||type==='mcp') {
+    cfg.command = document.getElementById('ctCmd').value.trim().split(' ');
+    cfg.description = `${type==='mcp'?'MCP':'CLI'} tool: ${name}`;
+  }
+  try {
+    await fetch('/api/tools/configure',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tools:[cfg]})});
+    await loadToolConfig();
+    document.getElementById('newToolType').value='';
+    document.getElementById('customToolForm').innerHTML='';
+  } catch(e) { console.error('addCustomTool',e); }
+}
+
+// ===== NAV TABS =====
+document.querySelectorAll('.nav-item').forEach(tab=>{tab.addEventListener('click',()=>{
+  document.querySelectorAll('.nav-item').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active'); const v=tab.dataset.tab;
+  document.getElementById('graphCanvas').style.display=v==='graph'?'':'none';
+  document.getElementById('graphLegend').style.display=v==='graph'?'flex':'none';
+  document.getElementById('graphControls').style.display=v==='graph'?'':'none';
+  document.getElementById('agentDetail').style.display=v==='graph'?(document.getElementById('agentDetail').classList.contains('show')?'flex':'none'):'none';
+  document.getElementById('consoleView').classList.toggle('active',v==='console');
+  document.getElementById('simView').classList.toggle('active',v==='sim');
+  document.getElementById('verdictView').classList.toggle('active',v==='verdict');
+  document.querySelector('.history-section')?.classList.toggle('visible',v==='history');
+  if (v!=='graph') document.getElementById('agentDetail').classList.remove('show');
+  if (v==='console') { const el=document.getElementById('consoleView'); if (!el.children.length&&S.console.length) { el.innerHTML=S.console.map(c=>`<div class="console-line"><span class="console-time">${c.ts}</span><span>${(c.text||'').slice(0,120)}</span></div>`).join(''); el.scrollTop=el.scrollHeight; } }
+  if (v==='verdict'&&S.verdictData) { renderVerdictFullPage(S.verdictData); }
+  if (v==='graph') reheatSimulation(0.1);
+});});
+
+// ===== INIT =====
+function frame() { simTick(); drawGraph(); requestAnimationFrame(frame); }
+resizeCanvas();
+new ResizeObserver(resizeCanvas).observe(document.getElementById('graphContainer'));
+frame();
+initDB().then(()=>{connectSSE(); loadToolConfig();});
+</script>
+</body>
+</html>
