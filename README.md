@@ -434,24 +434,32 @@ Goal: "Evaluate a market-neutral crypto trading strategy"
 
 ```
 hive/
-├── hive_mcp_server.py     # MCP server — plug into any AI host
-├── main.py                # CLI & desktop server entry point
-├── server.py              # FastAPI + SSE streaming
-├── agents.py              # Swarm agent lifecycle & tool loop
-├── orchestrator.py        # Pipeline orchestration
-├── tools.py               # Pluggable tool registry
-├── search.py              # Web search via Playwright
-├── llm.py                 # LLM abstraction (OpenAI-compatible)
-├── seed.py                # Goal decomposition
-├── debate.py              # Multi-agent debate engine
-├── simulation.py          # Probabilistic scenario engine
-├── report.py              # Markdown report generator
-├── memory.py              # Run persistence
-├── events.py              # Pub/sub event bus
-├── blackboard.py          # Cross-agent citation graph
-├── prompts.py             # Prompt loader
-├── prompts/               # Agent system prompts
-├── static/                # Desktop UI
+├── main.py                  # CLI & desktop server entry point
+├── hive_mcp_server.py       # MCP server — plug into any AI host
+│
+├── core/                    # Python package
+│   ├── agents.py            # Swarm agent lifecycle & tool loop
+│   ├── orchestrator.py      # Pipeline orchestration
+│   ├── tools.py             # Pluggable tool registry
+│   ├── server.py            # FastAPI + SSE streaming
+│   ├── search.py            # Web search via Playwright
+│   ├── llm.py               # LLM abstraction (OpenAI-compatible)
+│   ├── seed.py              # Goal decomposition
+│   ├── debate.py            # Multi-agent debate engine
+│   ├── simulation.py        # Probabilistic scenario engine
+│   ├── report.py            # Markdown report generator
+│   ├── memory.py            # Run persistence
+│   ├── events.py            # Pub/sub event bus
+│   ├── blackboard.py        # Cross-agent citation graph
+│   ├── prompts.py           # Prompt loader
+│   ├── prompts/             # Agent system prompts
+│   └── static/              # Desktop UI
+│
+├── requirements.txt
+├── .env.example
+├── LICENSE
+└── README.md
+```
 ├── requirements.txt
 ├── .env.example
 ├── LICENSE
