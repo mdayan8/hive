@@ -6,8 +6,8 @@ Generates 3 scenarios: optimistic, realistic, catastrophic.
 import asyncio
 import json
 import re
-from llm import call_llm
-from prompts import load_prompt
+from .llm import call_llm
+from .prompts import load_prompt
 
 
 async def generate_scenarios(agent_outputs: list[dict], goal: str, context: str, model: str = None) -> dict:

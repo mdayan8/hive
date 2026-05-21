@@ -502,7 +502,7 @@ class ToolRegistry:
 
 def create_default_registry() -> ToolRegistry:
     """Create the default tool registry with built-in search tools."""
-    from search import search_web, search_news
+    from .search import search_web, search_news
 
     registry = ToolRegistry()
     registry.register(BuiltinTool(

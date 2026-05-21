@@ -20,7 +20,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from dotenv import load_dotenv
 load_dotenv()
 
-from memory import list_runs, load_json, RUNS_DIR
+from hive.memory import list_runs, load_json, RUNS_DIR
 
 
 def main():
@@ -43,7 +43,7 @@ def main():
     args = parser.parse_args()
 
     if args.serve:
-        from server import serve
+        from hive.server import serve
         serve(host=args.host, port=args.port)
         return
 
@@ -91,10 +91,10 @@ def main():
     # Run via server API (local)
     print("[main] Starting local run...")
     import asyncio
-    from orchestrator import run_orchestration_stream
+    from hive.orchestrator import run_orchestration_stream
 
     async def run():
-        from search import init_browser, close_browser, search_web
+        from hive.search import init_browser, close_browser, search_web
         try:
             await init_browser()
             await run_orchestration_stream(

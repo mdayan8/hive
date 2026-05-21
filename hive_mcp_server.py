@@ -117,8 +117,8 @@ TOOL_DEFINITIONS = [
 
 async def _run_simulation(goal, constraints="", timeline="", risk_tolerance="medium"):
     """Run a full simulation and wait for the verdict."""
-    from orchestrator import run_orchestration_stream
-    from events import bus
+    from hive.orchestrator import run_orchestration_stream
+    from hive.events import bus
 
     result = {}
 
@@ -170,7 +170,7 @@ async def handle_tool_call(name, arguments):
             return {"content": [{"type": "text", "text": f"Simulation failed: {e}"}], "isError": True}
 
     elif name == "list_runs":
-        from memory import list_runs, load_json, RUNS_DIR
+        from hive.memory import list_runs, load_json, RUNS_DIR
         limit = arguments.get("limit", 20)
         runs = []
         for run_id in list_runs()[:limit]:
@@ -186,7 +186,7 @@ async def handle_tool_call(name, arguments):
 
     elif name == "get_run":
         run_id = arguments.get("run_id", "")
-        from memory import load_json, RUNS_DIR
+        from hive.memory import load_json, RUNS_DIR
         run_dir = RUNS_DIR / run_id
         if not run_dir.exists():
             return {"content": [{"type": "text", "text": f"Run '{run_id}' not found"}], "isError": True}
@@ -199,7 +199,7 @@ async def handle_tool_call(name, arguments):
         return {"content": [{"type": "text", "text": json.dumps(data, indent=2, default=str)}]}
 
     elif name == "get_report":
-        from memory import RUNS_DIR
+        from hive.memory import RUNS_DIR
         run_id = arguments.get("run_id", "")
         report_path = RUNS_DIR / run_id / "report.md"
         if not report_path.exists():

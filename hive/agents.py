@@ -6,10 +6,10 @@ and when to complete. No fixed types, no hardcoded limits.
 import json
 import asyncio
 from uuid import uuid4
-from llm import call_llm
-from events import bus
-from blackboard import board
-from tools import ToolRegistry, BuiltinTool, extract_tool_calls
+from .llm import call_llm
+from .events import bus
+from .blackboard import board
+from .tools import ToolRegistry, BuiltinTool, extract_tool_calls
 
 AGENT_COLORS = [
     "#7F77DD", "#1D9E75", "#D85A30", "#378ADD", "#BA7517",

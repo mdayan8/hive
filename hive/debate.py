@@ -5,7 +5,7 @@ Debate engine — agents challenge each other's findings.
 
 import asyncio
 import json
-from llm import call_llm
+from .llm import call_llm
 
 
 DEBATE_PROMPT = """You are a Debate Moderator. You have agent analyses of a business goal.

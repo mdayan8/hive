@@ -10,8 +10,8 @@ This replaces hardcoded agent types with dynamic determination.
 
 import asyncio
 import json
-from llm import call_llm
-from prompts import load_prompt
+from .llm import call_llm
+from .prompts import load_prompt
 
 
 async def extract_seed(scenario: str, model: str = None) -> dict:
