@@ -21,7 +21,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22AA55" alt="MIT License"></a>
   <a href="./hive_mcp_server.py"><img src="https://img.shields.io/badge/MCP-Ready-7C3AED" alt="MCP Ready"></a>
   <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi" alt="FastAPI"></a>
-  <a href="./agents.py"><img src="https://img.shields.io/badge/Agents-Multi--Swarm-FF6B35" alt="Multi-Agent"></a>
+  <a href="./core/agents.py"><img src="https://img.shields.io/badge/Agents-Multi--Swarm-FF6B35" alt="Multi-Agent"></a>
 </p>
 
 <p align="center">
@@ -86,7 +86,7 @@ curl -X POST http://localhost:8765/api/run \
   -d '{"goal": "Analyze AI chip market trends"}'
 
 # Python Library — embed in your code
-from orchestrator import run_orchestration_stream
+from core.orchestrator import run_orchestration_stream
 await run_orchestration_stream(goal="Evaluate this trading strategy")
 ```
 
@@ -306,19 +306,19 @@ curl -X POST http://127.0.0.1:8765/api/tools/configure \
 
 | Module | Responsibility |
 |--------|---------------|
-| `seed.py` | Goal decomposition into research domains |
-| `agents.py` | Swarm agent lifecycle & tool-calling loop |
-| `orchestrator.py` | End-to-end pipeline orchestration |
-| `debate.py` | Multi-agent cross-examination & consensus |
-| `simulation.py` | Probabilistic scenario generation |
-| `report.py` | Markdown report synthesis |
-| `tools.py` | Pluggable tool registry (HTTP, MCP, CLI, Python) |
-| `search.py` | Web search via Playwright |
-| `llm.py` | OpenAI-compatible LLM abstraction |
-| `server.py` | FastAPI + SSE streaming server |
-| `memory.py` | Run persistence (local file system) |
-| `blackboard.py` | Cross-agent citation graph |
-| `events.py` | Pub/sub event bus |
+| `core/seed.py` | Goal decomposition into research domains |
+| `core/agents.py` | Swarm agent lifecycle & tool-calling loop |
+| `core/orchestrator.py` | End-to-end pipeline orchestration |
+| `core/debate.py` | Multi-agent cross-examination & consensus |
+| `core/simulation.py` | Probabilistic scenario generation |
+| `core/report.py` | Markdown report synthesis |
+| `core/tools.py` | Pluggable tool registry (HTTP, MCP, CLI, Python) |
+| `core/search.py` | Web search via Playwright |
+| `core/llm.py` | OpenAI-compatible LLM abstraction |
+| `core/server.py` | FastAPI + SSE streaming server |
+| `core/memory.py` | Run persistence (local file system) |
+| `core/blackboard.py` | Cross-agent citation graph |
+| `core/events.py` | Pub/sub event bus |
 | `hive_mcp_server.py` | MCP server (plug into any host) |
 
 ### Data Flow
@@ -452,6 +452,7 @@ hive/
 │   ├── events.py            # Pub/sub event bus
 │   ├── blackboard.py        # Cross-agent citation graph
 │   ├── prompts.py           # Prompt loader
+│   ├── __init__.py          # Package init
 │   ├── prompts/             # Agent system prompts
 │   └── static/              # Desktop UI
 │
@@ -460,11 +461,8 @@ hive/
 ├── LICENSE
 └── README.md
 ```
-├── requirements.txt
-├── .env.example
-├── LICENSE
-└── README.md
-```
+
+<!-- end project structure -->
 
 ---
 
