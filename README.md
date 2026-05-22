@@ -1,65 +1,35 @@
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/License-MIT-22AA55" alt="MIT">
+  <img src="https://img.shields.io/badge/MCP-Ready-7C3AED" alt="MCP">
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/github/stars/mdayan8/hive?style=social" alt="Stars">
+</p>
+
 <div align="center">
   <h1>🐝 HIVE</h1>
-  <h3>Autonomous Swarm Intelligence Engine</h3>
-  <p><b>Predict. Analyze. Decide.</b></p>
-
-  <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-22AA55" alt="MIT License"></a>
-  <a href="./hive_mcp_server.py"><img src="https://img.shields.io/badge/MCP-Ready-7C3AED" alt="MCP Ready"></a>
-  <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI"></a>
-  <a href="https://playwright.dev"><img src="https://img.shields.io/badge/Playwright-45ba4b?logo=playwright&logoColor=white" alt="Playwright"></a>
-  <a href="./core/agents.py"><img src="https://img.shields.io/badge/Swarm-Multi--Agent-FF6B35" alt="Multi-Agent Swarm"></a>
-
-  <br><br>
-
+  <h3>Swarm Intelligence That Predicts Anything</h3>
+  <p><b>Drop any scenario in. Get an intelligence brief back.</b></p>
+  <br>
   <p>
-    <b>Desktop UI</b> •
-    <b>CLI</b> •
-    <b>MCP Server</b> •
-    <b>REST API</b> •
-    <b>Python Library</b>
+    <a href="#-quick-start"><kbd>🚀 Quick Start</kbd></a>
+    <a href="#-mcp-server"><kbd>🔌 MCP Server</kbd></a>
+    <a href="#-use-cases"><kbd>📖 Use Cases</kbd></a>
+    <a href="#-api-reference"><kbd>📋 API</kbd></a>
   </p>
 </div>
 
----
+<br>
 
-## Overview
+**HIVE deploys a swarm of AI agents that autonomously research, debate, and forecast any scenario.** Plug it into Claude, VS Code, or Cursor as an MCP tool — or run it as a desktop app, CLI, REST API, or Python library.
 
-**HIVE** deploys a swarm of autonomous AI agents to research, debate, and forecast any scenario. Describe your question in natural language — HIVE handles the rest: spinning up specialized agents, giving them tool access, running cross-examination debates, simulating probabilistic outcomes, and delivering a comprehensive intelligence forecast.
-
-```bash
-pip install -r requirements.txt && playwright install chromium
-echo "LLM_API_KEY=your-key" > .env
-python main.py --serve
-```
-
-Open **http://127.0.0.1:8765** and start simulating.
+One config line and your AI can run swarm simulations on demand.
 
 ---
 
-## Quick Start
+## 🔌 MCP Server — One Line, Instant Intelligence
 
-<details>
-<summary><b>🐍 Source</b></summary>
-
-```bash
-git clone https://github.com/mdayan8/hive.git
-cd hive
-
-pip install -r requirements.txt
-playwright install chromium
-
-cp .env.example .env   # Add your LLM_API_KEY
-
-python main.py --serve
-```
-
-</details>
-
-<details>
-<summary><b>🤖 MCP — AI Host Integration</b></summary>
-
-Add to your Claude Desktop config:
+Add this to your **Claude Desktop** config:
 
 ```json
 {
@@ -72,285 +42,177 @@ Add to your Claude Desktop config:
 }
 ```
 
-Then ask Claude: *"Run a simulation on AI chip market trends for 2026-2027"*
+Then just **ask Claude**:
 
-</details>
+> *"Run a simulation on whether I should pivot my startup to AI agents"*
+> *"What are the top cyber threats to cloud infrastructure in 2026?"*
+> *"Analyze this trading strategy risk"*
 
-<details>
-<summary><b>🐳 Docker</b></summary>
+HIVE spins up agents, researches, debates, runs simulations, and hands you a full forecast. Same setup works for **VS Code, Cursor, and any MCP host**.
 
-*Coming soon*
+```
+python hive_mcp_server.py
+```
 
-</details>
+| MCP Tool | What You Get |
+|----------|-------------|
+| `run_simulation` | Full verdict: probabilities, risks, narrative forecast |
+| `list_runs` | All previous simulations |
+| `get_run` | Full details (agents, debate, scenarios) |
+| `get_report` | Complete markdown report |
 
 ---
 
-## Core Interfaces
+## 🚀 Quick Start
 
-### Desktop UI
 ```bash
+# Install
+pip install -r requirements.txt
+playwright install chromium
+
+# Configure
+echo "LLM_API_KEY=your-api-key" > .env
+echo "LLM_BASE_URL=https://api.deepseek.com/v1/chat/completions" >> .env
+
+# Launch desktop UI
 python main.py --serve
 ```
-Live graph visualization, real-time SSE streaming, full control over agents and tools.
 
-### CLI
-```bash
-python main.py --goal "Will this startup succeed?" --timeline "18 months"
-```
+That's it. Open **http://127.0.0.1:8765**, type a goal, watch the swarm unfold live.
 
-### MCP Server
-```bash
-python hive_mcp_server.py
-```
-Plug into Claude, VS Code, Cursor, or any MCP host. Exposes `run_simulation`, `list_runs`, `get_run`, `get_report`.
+### Also works as...
 
-### REST API
 ```bash
+# CLI
+python main.py --goal "Will Web3 gaming take off in 2026?" --timeline "12 months"
+
+# REST API
 curl -X POST http://localhost:8765/api/run \
   -H "Content-Type: application/json" \
-  -d '{"goal": "Analyze AI chip market trends"}'
-```
+  -d '{"goal": "Analyze NVIDIA competitors"}'
 
-### Python Library
-```python
+# Python lib
 from core.orchestrator import run_orchestration_stream
-await run_orchestration_stream(goal="Evaluate this trading strategy")
+await run_orchestration_stream(goal="Evaluate this startup")
 ```
 
 ---
 
-## Workflow
+## 🧠 How It Works
 
 ```
-User Input
-    │
-    ▼
-Seed Extraction & Domain Decomposition
-    │
-    ▼
-Swarm Generation — Autonomous Agent Spawning
-    │
-    ▼
-Parallel Research & Tool Use (Web, APIs, MCP, CLI)
-    │
-    ▼
-Multi-Agent Debate & Consensus Building
-    │
-    ▼
-Probabilistic Simulation (3 scenarios)
-    │
-    ▼
-Final Synthesis — Verdict, Forecast, Action Plan
+Your Goal → Seed Extraction → Swarm of AI Agents → Parallel Research & Tools
+    → Multi-Agent Debate → Probabilistic Simulation → Intelligence Forecast
 ```
 
-| Step | Description |
-|------|-------------|
-| **Seed Extraction** | Goal → research domains & agent personas |
-| **Swarm Generation** | Root agents spawn sub-agents autonomously |
-| **Research** | Agents use tools (search, APIs, MCP, CLI) in parallel |
-| **Debate** | Cross-examination, blind spot identification, consensus |
-| **Simulation** | Optimistic, realistic, catastrophic outcomes with probabilities |
-| **Synthesis** | GO/NO-GO verdict, risk matrix, narrative forecast, action plan |
+| Phase | What Happens |
+|-------|-------------|
+| **Seed** | HIVE decomposes your goal into research domains and agent roles |
+| **Swarm** | Specialized agents spawn autonomously — market, risk, strategy, finance, trend |
+| **Research** | Agents use tools in parallel: web search, APIs, MCP servers, CLI |
+| **Debate** | Agents cross-examine findings, challenge assumptions, find blind spots |
+| **Simulate** | 3 probabilistic scenarios: optimistic, realistic, catastrophic |
+| **Forecast** | GO/NO-GO verdict with probability breakdown, risks, mitigations, narrative |
+
+Agents publish everything live via SSE — you watch the swarm think in real time on the graph UI.
 
 ---
 
-## Architecture
+## 🛠️ What Agents Can Use
 
-### Components
-
-| Module | Responsibility |
-|--------|---------------|
-| `core/seed.py` | Goal decomposition into research domains |
-| `core/agents.py` | Swarm agent lifecycle & tool-calling loop |
-| `core/orchestrator.py` | End-to-end pipeline orchestration |
-| `core/debate.py` | Multi-agent cross-examination & consensus |
-| `core/simulation.py` | Probabilistic scenario generation |
-| `core/report.py` | Markdown report synthesis |
-| `core/tools.py` | Pluggable tool registry (HTTP, MCP, CLI, Python) |
-| `core/search.py` | Web search via Playwright |
-| `core/llm.py` | OpenAI-compatible LLM abstraction |
-| `core/server.py` | FastAPI + SSE streaming server |
-| `core/memory.py` | Run persistence |
-| `core/blackboard.py` | Cross-agent citation graph |
-| `core/events.py` | Pub/sub event bus |
-| `hive_mcp_server.py` | MCP server — plug into any AI host |
-
-### Tool System
-
-Agents can use any tool during research via the pluggable registry:
-
-| Type | Configuration | Example Use Case |
-|------|--------------|-----------------|
-| **http** | URL, method, headers, path template | REST APIs, crypto exchanges, threat intel |
-| **mcp** | command, args, env | Databases, file systems, any MCP server |
-| **cli** | command template | Shell scripts, local analysis tools |
-| **python** | inline code | Custom functions evaluated at runtime |
-| **builtin** | system-level | `search_web`, `search_news` (always available) |
+Any tool you connect. The pluggable registry supports 5 types:
 
 ```json
-{
-  "type": "http",
-  "name": "dexscreener",
-  "config": {
-    "url": "https://api.dexscreener.com/latest/dex/search",
-    "method": "GET",
-    "path_template": "?q={token}"
-  }
-}
+{"type": "http", "name": "dexscreener", "config": {"url": "https://api.dexscreener.com/latest/dex/search", "method": "GET", "path_template": "?q={token}"}}
 ```
 
----
+```json
+{"type": "mcp", "name": "db_analyst", "config": {"command": "npx", "args": ["-y", "@mcp/postgres", "postgresql://..."]}}
+```
 
-## MCP Server
+| Type | What You Can Connect |
+|------|---------------------|
+| `http` | Any REST API — exchanges, threat intel, news, on-chain data |
+| `mcp` | Any MCP server — databases, file systems, APIs |
+| `cli` | Shell scripts, python scripts, local tools |
+| `python` | Inline functions evaluated at runtime |
+| `builtin` | `search_web`, `search_news` (always on) |
 
-HIVE exposes itself as a **Model Context Protocol** server for integration with any MCP-compatible host.
+Configure via the UI tool manager or API:
 
 ```bash
-# stdio transport (desktop AI tools)
-python hive_mcp_server.py
-
-# SSE transport (web apps)
-python hive_mcp_server.py --transport sse --port 8932
-```
-
-| Tool | Description |
-|------|-------------|
-| `run_simulation` | Full swarm forecast — verdict, probabilities, risks, narrative |
-| `list_runs` | List all previous simulations |
-| `get_run` | Full details (agents, debate, scenarios) for a run |
-| `get_report` | Markdown report for a run |
-
-```python
-import json, subprocess
-
-proc = subprocess.Popen(
-    ["python", "hive_mcp_server.py"],
-    stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True
-)
-
-def mcp(method, params={}):
-    req = json.dumps({"jsonrpc": "2.0", "id": 1, "method": method, "params": params})
-    proc.stdin.write(req + "\n"); proc.stdin.flush()
-    return json.loads(proc.stdout.readline())
-
-mcp("initialize", {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "my-app"}})
-result = mcp("tools/call", {"name": "run_simulation", "arguments": {"goal": "Analyze quantum computing market"}})
-print(result["result"]["content"][0]["text"])
+curl -X POST http://localhost:8765/api/tools/configure \
+  -H "Content-Type: application/json" \
+  -d '{"tools": [{"type": "http", "name": "my_api", "config": {"url": "https://api.example.com"}}]}'
 ```
 
 ---
 
-## Configuration
+## 📖 Use Cases
 
-### Environment Variables
+**Startup Validation** → "Should I launch a B2B SaaS for dental clinics?"  
+8 agents research market, competition, regulations, sales. Debate reveals 3 blind spots. Verdict: **68% — CONDITIONAL-GO** with pivots.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `LLM_API_KEY` | — | LLM API key (required) |
-| `LLM_BASE_URL` | `https://api.deepseek.com/v1/chat/completions` | OpenAI-compatible endpoint |
-| `LLM_MODEL_NAME` | `deepseek-v4-flash` | Default LLM model |
-| `ORCHESTRATOR_MODEL` | `LLM_MODEL_NAME` | Orchestration & synthesis model |
-| `AGENT_MODEL` | `LLM_MODEL_NAME` | Agent research model |
+**Cyber Threat Assessment** → "Top cloud threats in 2026?"  
+Agents map attack surfaces, zero-day trends, actor motivations. Cross-reference CVE databases. Returns: **prioritized threat matrix with mitigations**.
 
-### Provider Examples
+**Trading Strategy** → "Evaluate a market-neutral crypto strategy"  
+Agents connect CoinGecko, on-chain data, sentiment feeds. Analyze correlations and drawdowns. Verdict: **CONDITIONAL-GO at 72% confidence**.
+
+---
+
+## ⚙️ Config
 
 ```env
-# DeepSeek
-LLM_API_KEY=sk-deepseek-key
-LLM_BASE_URL=https://api.deepseek.com/v1/chat/completions
+LLM_API_KEY=sk-your-key
+LLM_BASE_URL=https://api.deepseek.com/v1/chat/completions  # or Qwen, OpenAI, etc.
 LLM_MODEL_NAME=deepseek-v4-flash
-
-# Alibaba Qwen
-LLM_API_KEY=sk-qwen-key
-LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
-LLM_MODEL_NAME=qwen-plus
-
-# OpenAI
-LLM_API_KEY=sk-openai-key
-LLM_BASE_URL=https://api.openai.com/v1/chat/completions
-LLM_MODEL_NAME=gpt-4o
 ```
+
+Works with any OpenAI-compatible API — DeepSeek, Qwen, OpenAI, Groq, Together, etc.
 
 ---
 
-## Use Cases
-
-### Startup Validation
-```
-Goal: "Should I launch a B2B SaaS for dental clinics?"
-→ 8 agents research market size, competition, regulations, sales cycles
-→ Debate reveals 3 blind spots in founder's assumptions
-→ 68% success probability — CONDITIONAL-GO with specific pivots
-```
-
-### Threat Assessment
-```
-Goal: "Top cyber threats to cloud infrastructure in 2026"
-→ Agents map attack surfaces, zero-day trends, actor motivations
-→ Cross-reference CVE databases, threat intel feeds
-→ Prioritized threat matrix with mitigation playbooks
-```
-
-### Trading Strategy
-```
-Goal: "Evaluate a market-neutral crypto trading strategy"
-→ Agents connect CoinGecko API, on-chain data, sentiment feeds
-→ Analyze correlations, drawdowns, regime changes
-→ CONDITIONAL-GO with position-sizing rules — 72% confidence
-```
-
----
-
-## API Reference
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/` | Desktop UI |
-| GET | `/api/events` | SSE event stream — real-time swarm feed |
-| POST | `/api/run` | Start a simulation |
-| GET | `/api/runs` | List past runs |
-| GET | `/api/runs/{id}` | Run details (verdict, agents, debate, scenarios) |
-| GET | `/api/runs/{id}/report` | Markdown report |
-| GET | `/api/tools` | List registered tools with schemas |
-| POST | `/api/tools/configure` | Register custom tools |
-| GET | `/api/tools/usage` | Tool call log |
-| POST | `/api/agent/chat` | Chat with an individual agent |
-
----
-
-## Project Structure
+## 📁 Structure
 
 ```
 hive/
-├── main.py                  # CLI & desktop server
-├── hive_mcp_server.py       # MCP server
-│
-├── core/                    # Python package
+├── main.py                  # CLI & server
+├── hive_mcp_server.py       # MCP server ← start here for AI integration
+├── core/                    # Engine
 │   ├── agents.py            # Swarm lifecycle
-│   ├── orchestrator.py      # Pipeline orchestration
+│   ├── orchestrator.py      # Pipeline
 │   ├── tools.py             # Tool registry
 │   ├── server.py            # FastAPI + SSE
 │   ├── search.py            # Web search
 │   ├── llm.py               # LLM abstraction
-│   ├── seed.py              # Goal decomposition
-│   ├── debate.py            # Debate engine
-│   ├── simulation.py        # Scenario engine
-│   ├── report.py            # Report generator
-│   ├── memory.py            # Run persistence
-│   ├── events.py            # Event bus
-│   ├── blackboard.py        # Citation graph
-│   ├── prompts.py           # Prompt loader
-│   ├── prompts/             # Agent system prompts
+│   ├── seed.py / debate.py  # Core logic
+│   ├── simulation.py        # Scenarios
+│   ├── report.py            # Reports
+│   ├── prompts/             # Agent prompts
 │   └── static/              # Desktop UI
-│
 ├── requirements.txt
-├── .env.example
-├── LICENSE
-└── README.md
+└── .env.example
 ```
 
 ---
 
-## License
+## 📋 API
 
-[MIT](LICENSE)
+| Endpoint | What It Does |
+|----------|-------------|
+| `GET /` | Desktop UI |
+| `GET /api/events` | Live SSE stream |
+| `POST /api/run` | Start simulation |
+| `GET /api/runs` | List past runs |
+| `GET /api/runs/{id}` | Run details |
+| `GET /api/runs/{id}/report` | Markdown report |
+| `GET /api/tools` | List tools |
+| `POST /api/tools/configure` | Add custom tools |
+| `POST /api/agent/chat` | Talk to an agent |
+
+---
+
+<p align="center">
+  <b>HIVE</b> — <a href="https://github.com/mdayan8/hive">GitHub</a> • <a href="LICENSE">MIT License</a>
+</p>
